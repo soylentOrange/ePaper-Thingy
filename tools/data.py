@@ -3,7 +3,7 @@ import os
 import sys
 
 os.makedirs('.pio/data', exist_ok=True)
-for filename in ['logo.png', 'apple-touch-icon.png', 'favicon-96x96.png']:
+for filename in ['logo.png', 'apple-touch-icon.png', 'favicon-96x96.png', 'favicon.svg']:
     skip = False
     if os.path.isfile('.pio/data/' + filename + '.timestamp'):
         with open('.pio/data/' + filename + '.timestamp', 'r', -1, 'utf-8') as timestampFile:
