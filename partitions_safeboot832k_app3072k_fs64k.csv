@@ -1,7 +1,0 @@
-# Name   ,Type ,SubType  ,Offset ,Size  ,Flags
-nvs      ,data ,nvs      ,36K    ,20K   ,
-otadata  ,data ,ota      ,56K    ,8K    ,
-safeboot ,app  ,factory  ,64K    ,832K  ,
-app      ,app  ,ota_0    ,896K   ,3072K ,
-spiff    ,data ,spiffs   ,3968K  ,64K   ,
-coredump ,data ,coredump ,4032K  ,64K   ,
