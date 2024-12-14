@@ -11,12 +11,13 @@ public:
     ESPRestartClass();
     enum class RestartFlag {
         none,
-        restartPlain,
+        restartApp,
+        restartSafeboot,
         resetWifi,
         resetAll};
     void begin();
     void restart(RestartFlag flag);
-    void restartDelayed(unsigned long delayBefore, RestartFlag flag);    
+    void restartDelayed(unsigned long delayBeforeCleanup, unsigned long delayBeforeRestart, RestartFlag flag);    
     RestartFlag getState();
 private:
     Task _cleanupBeforeRestart;
@@ -24,6 +25,7 @@ private:
     void _cleanupCallback();
     void _restartCallback();
     enum RestartFlag _restartFlag;
+    unsigned long _delayBeforeRestart;
 };
 
 extern ESPRestartClass ESPRestart;

@@ -19,6 +19,7 @@ void EventHandlerClass::begin() {
     _previous = _state;
     scheduler.addTask(_eventHandler);
     _eventHandler.enable();
+    LOGD(TAG, "EventHandler started!");
 }
 
 void EventHandlerClass::end() {
@@ -27,6 +28,7 @@ void EventHandlerClass::end() {
     _previous = _state;
     _eventHandler.disable();
     scheduler.deleteTask(_eventHandler);
+    LOGD(TAG, "EventHandler-Task disabled!");
 }
 
 Mycila::ESPConnect::State EventHandlerClass::getState() {
@@ -37,7 +39,6 @@ Mycila::ESPConnect::State EventHandlerClass::getState() {
 void EventHandlerClass::_eventHandlerCallback() {
 
     // Do something on state change of espConnect
-    yield();
     _previous = _state;
     _state = espConnect.getState();
     if (_previous != _state) {
@@ -47,20 +48,31 @@ void EventHandlerClass::_eventHandlerCallback() {
                 yield();
                 LOGI(TAG, "IPAddress is: %s", espConnect.getIPAddress().toString().c_str());
                 WebServer.begin();
-                Website.begin();
+                yield();
+                WebSite.begin();
                 break;
+
             case Mycila::ESPConnect::State::AP_STARTED:
                 LOGI(TAG, "====> Created AP...");
                 yield();
                 LOGI(TAG, "SSID is: %s", espConnect.getIPAddress().toString().c_str());
                 LOGI(TAG, "IPAddress is: %s", espConnect.getIPAddress().toString().c_str());
                 WebServer.begin();
-                Website.begin();
+                yield();
+                WebSite.begin();
+                break;
+
+            case Mycila::ESPConnect::State::PORTAL_STARTED:
+                LOGI(TAG, "====> Started Captive Portal...");
+                yield();
+                LOGI(TAG, "SSID is: %s", espConnect.getIPAddress().toString().c_str());
+                LOGI(TAG, "IPAddress is: %s", espConnect.getIPAddress().toString().c_str());
+                WebServer.begin();
                 break;
 
             case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
                 LOGI(TAG, "====> Disconnected from network...");
-                Website.end();
+                WebSite.end();
                 WebServer.end();
                 break;
 

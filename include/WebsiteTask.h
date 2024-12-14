@@ -6,9 +6,9 @@
 
 #include <TaskSchedulerDeclarations.h>
 
-class WebsiteClass {
+class WebSiteClass {
 public:
-    WebsiteClass();
+    WebSiteClass();
     void begin();
     void end();
 
@@ -18,4 +18,4 @@ private:
     void _websiteCallback();
 };
 
-extern WebsiteClass Website;
+extern WebSiteClass WebSite;

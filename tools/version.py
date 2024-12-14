@@ -60,12 +60,13 @@ def do_main():
     # version = "v2.40.2-rc1"
     constantFile = os.path.join(env.subst("$BUILD_DIR"), "__compiled_constants.c")
     with open(constantFile, "w") as f:
+        timestamp = datetime.now().isoformat(sep=' ', timespec='seconds')
         f.write(
             f'const char* __COMPILED_APP_VERSION__ = "{version[1:] if tagPattern.match(version)  else version}";\n'
             f'const char* __COMPILED_BUILD_BRANCH__ = "{branch}";\n'
             f'const char* __COMPILED_BUILD_HASH__ = "{short_hash}";\n'
             f'const char* __COMPILED_BUILD_NAME__ = "{env["PIOENV"]}";\n'
-            f'const char* __COMPILED_BUILD_TIMESTAMP__ = "{datetime.now(timezone.utc).isoformat()}";\n'
+            f'const char* __COMPILED_BUILD_TIMESTAMP__ = "{timestamp}";\n'
         )
         sys.stderr.write(
             f"version.py: APP_VERSION: {version[1:] if tagPattern.match(version)  else version}\n"
@@ -74,7 +75,7 @@ def do_main():
         sys.stderr.write(f"version.py: BUILD_HASH: {short_hash}\n")
         sys.stderr.write(f"version.py: BUILD_NAME: {env['PIOENV']}\n")
         sys.stderr.write(
-            f"version.py: BUILD_TIMESTAMP: {datetime.now(timezone.utc).isoformat()}\n"
+            f"version.py: BUILD_TIMESTAMP: {timestamp}\n"
         )
 
     env.AppendUnique(PIOBUILDFILES=[constantFile])

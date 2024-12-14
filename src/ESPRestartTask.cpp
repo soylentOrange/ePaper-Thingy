@@ -7,9 +7,10 @@
 #define TAG "ESPRestart"
 
 ESPRestartClass::ESPRestartClass()
-    : _cleanupBeforeRestart(TASK_IMMEDIATE, TASK_ONCE, std::bind(&ESPRestartClass::_cleanupCallback, this), NULL, false)
-    , _restart(TASK_IMMEDIATE, TASK_ONCE, std::bind(&ESPRestartClass::_restartCallback, this), NULL, false)
-    , _restartFlag(RestartFlag::none) {
+    : _cleanupBeforeRestart(TASK_SECOND, TASK_ONCE, std::bind(&ESPRestartClass::_cleanupCallback, this), NULL, false)
+    , _restart(TASK_SECOND, TASK_ONCE, std::bind(&ESPRestartClass::_restartCallback, this), NULL, false)
+    , _restartFlag(RestartFlag::none)
+    , _delayBeforeRestart(0) {
 }
 
 void ESPRestartClass::begin() {
@@ -23,29 +24,29 @@ ESPRestartClass::RestartFlag ESPRestartClass::getState() {
 
 void ESPRestartClass::restart(RestartFlag restartFlag = RestartFlag::none) {
     _restartFlag = restartFlag;
+    _delayBeforeRestart = 0;
     _cleanupBeforeRestart.enable();
 }
 
-void ESPRestartClass::restartDelayed(unsigned long delayBefore, RestartFlag restartFlag = RestartFlag::none) {
+void ESPRestartClass::restartDelayed(unsigned long delayBeforeCleanup = 500, unsigned long delayBeforeRestart = 500, RestartFlag restartFlag = RestartFlag::none) {
     _restartFlag = restartFlag;
-    _cleanupBeforeRestart.enableDelayed(delayBefore);
+    _delayBeforeRestart = delayBeforeRestart;
+    _cleanupBeforeRestart.enableDelayed(delayBeforeCleanup);
 }
 
 void ESPRestartClass::_cleanupCallback() {
     // Do some cleanup...
-    Website.end();
+    WebSite.end();
     WebServer.end();
     ESPConnect.end();
-    // ..., yield...
-    yield();
 
     // ...and finally, the Restart-Task can be enabled subsequently
-    _restart.enable();
+    _restart.enableDelayed(_delayBeforeRestart);
 } 
 
 // Just iniate the restart
 void ESPRestartClass::_restartCallback() {
-    ESP.restart();
+    esp_restart();
 } 
 
 ESPRestartClass ESPRestart;

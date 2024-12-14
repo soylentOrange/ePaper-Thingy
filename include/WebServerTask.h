@@ -11,10 +11,12 @@ public:
     WebServerClass();
     void begin();
     void end();
+    bool isRunning();
 
 private:
     Task _webServer;
     void _webServerCallback();
+    bool _isRunning;
 };
 
 extern WebServerClass WebServer;
