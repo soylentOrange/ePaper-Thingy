@@ -9,7 +9,7 @@ Actually, I would love to implement this using [ESPHome](https://esphome.io/) to
 ## How is it made?
 
 This project is implemented using [PlatformIO](https://platformio.org/) with the arduino-3 platform from the (p)eople (i)nitiated (o)ptimized (arduino) ([pioarduino](https://github.com/pioarduino/platform-espressif32/)). For my convenience, OTA-programming is enabled by including the [ArduinoOTA](https://github.com/espressif/arduino-esp32)-library from Espressif Systems' Arduino ESP32 project.
-Firmware updates and ArduinoOTA is enabled with a small safeboot partition (640KB). The main app can span over ~3MB. To trigger a restart into this partion, just call /safeboot. After a few seconds the OTA-Website shows up:
+Firmware updates and ArduinoOTA is enabled with a small safeboot partition (640KB). The main app can span over ~3MB. To trigger a restart into this partion, just call http://epaperthingy.local/safeboot. After a few seconds the OTA-Website shows up:
 
 ![safeboot screenshot](assets/safeboot_epaperthingy.png)
 
@@ -25,12 +25,13 @@ When using Over-the-Air (OTA) updating from PlatformIO, the safeboot-mode will b
 
 ## How does it work?
 
-After connecting a display to your board, compile the project, flash it to your board. Connect to the new Access-Point (ePaperPortal) and connect the board to your home WiFi. Afterward you can just open http://epaperthingy.local to see the "minimalistic" Website.
-__Future Reference:__ Test pictures are shown on the display when opening http://epaper.local/showpic1 .. http://epaper.local/showpic5 and the display is wiped clean on http://epaper.local/wipe.
+After connecting a display to your board, compile the project, flash it to your board. Connect to the new Access-Point (ePaperPortal) and connect the board to your home WiFi. Afterward you can just open http://epaperthingy.local to see the (minimalistic, at most...) Website.
+__Future Reference:__ Test pictures are shown on the display when opening http://epaperthingy.local/showpic1 .. http://epaperthingy.local/showpic5 and the display is wiped clean on http://epaperthingy.local/wipe.
 
 ### How to flash the firmware?
 
-Flashing the board for the first time is done via esptool within PlatformIO to the USB-CDC of the Wemos S2 mini board. Remember, when using a factory-new board with USB-CDC, you need to press both buttons, release the "0"-button first, then the "RST"-button (this sequence will enable the USB-CDC). Subsequently, you can just flash it without button juggling or simply flash it OTA (set upload_protocol = espota and upload_port = epaper.local in your platformio.ini). When flashing the factory.bin you'll always have to to the button juggling.
+Flashing the board for the first time is done via esptool within PlatformIO to the USB-CDC of the Wemos S2 mini board. Remember, when using a factory-new board with USB-CDC, you need to press both buttons, release the "0"-button first, then the "RST"-button (this sequence will enable the USB-CDC). Subsequently, you can just flash it without button juggling or simply flash it OTA (set `upload_protocol = espota` and upload_port = `epaperthingy.local`, and also add `extra_scripts = tools/safeboot_activate.py` in your platformio.ini).
+When flashing the factory.bin you'll always have to to the button juggling.
 
 ## What can I do with it?
 
@@ -43,5 +44,5 @@ Some points that I would have liked to know earlier:
 
 * The favicon was prepared using [Favicon generator. For real](https://realfavicongenerator.net/). The icon that I use is from the [Pictogrammers' Material Design Icon Libray](https://pictogrammers.com/library/mdi/) and was designed by [Simran](https://pictogrammers.com/contributor/Simran-B/).
 * See the `WebsiteTask.cpp` on how to serve the images.
-* The favicon-images are taken from the data-folder, compressed and linked into the firmaware image. When you want to find out how to use them, have a look in the firmware.map (in `.pio/build/[your-env]`).
+* The favicon-images are taken from the data-folder, compressed and linked into the firmware image. When you want to find out how to use them, have a look in the firmware.map (in `.pio/build/[your-env]`).
 * This project is using [TaskScheduler](https://github.com/arkhipenko/TaskScheduler) for cooperative multitasking. The `main.cpp` seems rather empty, everything that's interesting is happening in the individual tasks.
