@@ -57,4 +57,4 @@
 logs/
 build/
 
-.safeboot/data/customized*.html
+safeboot/data/customized*.html
