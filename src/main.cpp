@@ -23,12 +23,7 @@ void setup() {
         // USB-CDC doesn't need a baud rate
         Serial.begin();
 
-        // // Enable Debug via USB-CDC
-        // //#if !ARDUINO_USB_MODE && ARDUINO_USB_CDC_ON_BOOT
-        // #if ARDUINO_USB_CDC_ON_BOOT
-        //     Serial.enableReboot(true);
-        //     Serial.setDebugOutput(true);
-        // #endif
+        // Enabling Debug via USB-CDC is handled via framework
     #endif
 
     // Get reason for restart

@@ -8,6 +8,8 @@
 #include <Preferences.h>
 #include <ESPAsyncWebServer.h>
 #include <MycilaESPConnect.h>
+#include <FS.h>
+#include <LittleFS.h>
 
 #include <WebServerTask.h>
 #include <WebSiteTask.h>

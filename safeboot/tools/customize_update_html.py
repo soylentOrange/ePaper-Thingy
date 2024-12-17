@@ -17,18 +17,18 @@ def readFlag(flag):
             return cleanedFlag
     return None
 
-os.makedirs('.pio/data', exist_ok=True)
+os.makedirs('.pio/assets', exist_ok=True)
 for filename in ['update.html']:
-    # always rebuild to update the build datetime string
-    # skip = False
-    # if os.path.isfile('.pio/data/' + filename + '.timestamp'):
-    #     with open('.pio/data/' + filename + '.timestamp', 'r', -1, 'utf-8') as timestampFile:
-    #         if os.path.getmtime('data/' + filename) == float(timestampFile.readline()):
-    #             skip = True
-    # if skip:
-    #     sys.stderr.write(f"customize_update_html.py: {filename} up to date\n")
-    #     continue
-    with open('data/' + filename, 'r') as inputFile:
+    # coment out next to always rebuild to update the build datetime string
+    skip = False
+    if os.path.isfile('.pio/assets/' + filename + '.timestamp'):
+        with open('.pio/assets/' + filename + '.timestamp', 'r', -1, 'utf-8') as timestampFile:
+            if os.path.getmtime('assets/' + filename) == float(timestampFile.readline()):
+                skip = True
+    if skip:
+        sys.stderr.write(f"customize_update_html.py: {filename} up to date\n")
+        continue
+    with open('assets/' + filename, 'r') as inputFile:
         for count, line in enumerate(inputFile):
             pass
         sys.stderr.write(f"customize_update_html.py: Total Lines: {count + 1}\n")
@@ -39,9 +39,9 @@ for filename in ['update.html']:
         timestamp = datetime.now().isoformat(sep=' ', timespec='seconds')
         sys.stderr.write(f"customize_update_html.py: timestamp: {timestamp}\n")
 
-    with open('data/' + filename, 'r') as inputFile:
+    with open('assets/' + filename, 'r') as inputFile:
         lines = "<!-- DO NOT EDIT - Created by customize_update_html.py -->\n"
-        with open('data/' + "customized_" + filename, 'w') as outputFile:
+        with open('assets/' + "customized_" + filename, 'w') as outputFile:
             for _ in range(count):
                 line = inputFile.readline()
                 if "<title>" in line:
@@ -57,9 +57,9 @@ for filename in ['update.html']:
 
             outputFile.write(lines)
 
-    with open('data/' + "customized_" + filename, 'rb') as inputFile:
-        with gzip.open('.pio/data/' + filename + '.gz', 'wb') as outputFile:
-            sys.stderr.write(f"customize_update_html.py: gzip \'data/customized_{filename}\' to \'.pio/data/{filename}.gz\'\n")
+    with open('assets/' + "customized_" + filename, 'rb') as inputFile:
+        with gzip.open('.pio/assets/' + filename + '.gz', 'wb') as outputFile:
+            sys.stderr.write(f"customize_update_html.py: gzip \'assets/customized_{filename}\' to \'.pio/assets/{filename}.gz\'\n")
             outputFile.writelines(inputFile)
-    with open('.pio/data/' + filename + '.timestamp', 'w', -1, 'utf-8') as timestampFile:
-        timestampFile.write(str(os.path.getmtime('data/' + filename)))
+    with open('.pio/assets/' + filename + '.timestamp', 'w', -1, 'utf-8') as timestampFile:
+        timestampFile.write(str(os.path.getmtime('assets/' + filename)))

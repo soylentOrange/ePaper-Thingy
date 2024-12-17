@@ -42,14 +42,6 @@ class SafeBootOTAConnect {
             OTA_UPDATER_TIMEOUT, // ==> bail-out...
         };
 
-        enum class Mode {
-            NONE = 0,
-            // wifi ap
-            AP,
-            // wifi sta
-            STA
-        };
-
         typedef std::function<void(State previous, State state)> StateCallback;
 
         typedef struct {
@@ -81,6 +73,11 @@ class SafeBootOTAConnect {
             // whether ArduinoOTA should be made available or not
             bool enableArduinoOTA;
         } ArduinoOTAConfig;
+
+        enum class OTAMode {
+            Firmware,
+            Filesystem,
+        };
 
     public:
         explicit SafeBootOTAConnect(AsyncWebServer& httpd) : _httpd(&httpd) {}
@@ -125,6 +122,9 @@ class SafeBootOTAConnect {
         // Warning: use only before begin!
         void setArduinoOTAConfig(const ArduinoOTAConfig& arduinoOTAConfig) { _arduinoOTAConfig = arduinoOTAConfig; }
 
+        // set OTA-Mode (Firmware or Filesystem)
+        void setOTAMode(OTAMode otaMode);
+
     private:
         AsyncWebServer* _httpd = nullptr;
         State _state = State::NETWORK_DISABLED;
@@ -143,9 +143,7 @@ class SafeBootOTAConnect {
         Ticker _delayedTask;
         uint32_t _delayBeforeRestart = 0;
         uint32_t _hotspotDetectCounter = 0;
-        bool _otaFinished = false;
-        bool _doingRestart = false;
-        bool _otaSuccess;
+        uint32_t _otaMode = 0; 
         std::string _otaResultString;
 
     private:

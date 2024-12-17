@@ -11,6 +11,7 @@ public:
     ESPRestartClass();
     enum class RestartFlag {
         none,
+        restartOnError,
         restartApp,
         restartSafeboot,
         resetWifi,

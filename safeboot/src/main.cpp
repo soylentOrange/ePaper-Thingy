@@ -23,12 +23,6 @@ void setup() {
         Serial.setDebugOutput(true);
     #endif
 
-    // Set next boot partition
-    const esp_partition_t* partition = esp_partition_find_first(esp_partition_type_t::ESP_PARTITION_TYPE_APP, esp_partition_subtype_t::ESP_PARTITION_SUBTYPE_APP_OTA_0, nullptr);
-    if (partition) {
-        esp_ota_set_boot_partition(partition);
-    }    
-
     // Start SafeBootOTAConnect
     log_d("Blockingly trying to connect to saved WiFi or start portal...");
     otaConnect.begin(APP_NAME, SAFEBOOT_SSID, SAFEBOOT_AP_PASSWORD);

@@ -14,8 +14,8 @@ public:
 
 private:
     Task _website;
-    bool _websiteOnEnable();
     void _websiteCallback();
+    bool _fsMounted = false;
 };
 
 extern WebSiteClass WebSite;

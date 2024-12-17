@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<path d="m10 8.4375e-7v200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m200 101h-200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m200 70h-200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m200 40h-200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m200 10h-200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m200 130h-200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m200 160h-200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m200 190h-200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m40 2.5719e-6v200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m130 1e-6v200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m160 5e-6v200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m190 2e-6v200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m100 3.75e-7v200" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m70-4.125e-7v200" fill="none" stroke="#000" stroke-width="2"/>
+<rect x="39.961" y="39.961" width="120.08" height="120.08" fill="#fff" stroke="#000" stroke-width="1.9212"/>
+<circle cx="100" cy="101" r="73.994" fill="none" stroke="#000" stroke-width="2.0129"/>
+<rect x="100" y="60" width="20" height="20" fill-opacity=".74958" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="80" y="60" width="20" height="20" fill-opacity=".5" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="60" y="60" width="20" height="20" fill-opacity=".25" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="120" y="60" width="20" height="20" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="100" y="91" width="20" height="20" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="80" y="91" width="20" height="20" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="60" y="91" width="20" height="20" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="120" y="91" width="20" height="20" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="100" y="120" width="20" height="20" fill="#f00" fill-opacity=".74958" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="80" y="120" width="20" height="20" fill="#f00" fill-opacity=".5" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="60" y="120" width="20" height="20" fill="#f00" fill-opacity=".25" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="120" y="120" width="20" height="20" fill="#f00" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="100" y="91" width="20" height="20" fill="#f00" fill-opacity=".74958" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="80" y="91" width="20" height="20" fill="#f00" fill-opacity=".5" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="60" y="91" width="20" height="20" fill="#f00" fill-opacity=".25" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+<rect x="120" y="91" width="20" height="20" fill="#f00" vector-effect="non-scaling-stroke" style="-inkscape-stroke:hairline"/>
+</svg>

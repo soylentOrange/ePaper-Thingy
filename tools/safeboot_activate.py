@@ -2,7 +2,6 @@
 #
 # Copyright (C) 2024 Robert Wendlandt
 #
-
 Import("env")
 import sys
 import os
@@ -41,3 +40,5 @@ def safeboot_activate(source, target, env):
         status("Activated SafeBoot on: %s" % upload_port)
 
 env.AddPreAction("upload", safeboot_activate)
+env.AddPreAction("uploadfs", safeboot_activate)
+env.AddPreAction("uploadfsota", safeboot_activate)

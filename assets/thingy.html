@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+    <title>Will be inserted by customize_thingy_html.py</title>
+    <style>
+      * {
+        margin: auto;
+        text-align: center;
+        font-family: Tahoma, Verdana, sans-serif;
+        color: black;
+        font-weight: normal;
+        padding: 0;
+      }
+
+      .shadow_container {
+        width: 80%;
+        max-width: 400px;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow:
+          0 2px 6px 0 rgba(0, 0, 0, 0.1),
+          0 4px 10px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      .result_container {
+        width: 100%;
+        display: none;
+        margin: auto;
+        padding-top: 50px;
+        padding-bottom: 50px;
+      }
+
+      .result_text {
+        width: 100%;
+        font-size: 14px;
+        margin: 15px auto 10px auto;
+      }
+
+      .header {
+        width: 90%;
+        text-align: center;
+        padding: 0;
+        margin: 0 auto 0 auto;
+        max-width: 400px;
+      }
+
+      .column {
+        width: 100%;
+      }
+
+      .info_texts {
+        display: block;
+        width: 100%;
+        margin: 10px auto auto auto;
+        padding: 0;
+        font-size: 14px;
+      }
+
+      .info_text_container {
+        display: flex;
+        margin-top: 10px;
+      }
+
+      .info_text_name {
+        width: 50%;
+        margin-left: 0;
+        padding-left: 10px;
+        text-align: left;
+        color: black;
+      }
+
+      .info_text_value {
+        width: 50%;
+        margin-right: 0;
+        padding-right: 10px;
+        text-align: right;
+        color: gray;
+      }
+
+      p {
+        font-size: 18px;
+        color: gray;
+        margin: 0;
+      }
+
+      hr {
+        color: lightgray;
+        margin: 24px auto 14px auto;
+        width: 100%;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 24px;
+        display: none;
+        margin: 48px auto 24px auto;
+      }
+
+      h2 {
+        font-size: 18px;
+        margin: 0;
+      }
+
+      h5 {
+        font-size: 12px;
+        color: gray;
+        margin: 0 auto 12px auto;
+        padding: 0;
+      }
+
+      h6 {
+        font-size: 16px;
+        color: gray;
+        margin: 0;
+      }
+
+      button {
+        width: 100%;
+        padding: 8px;
+        border: none;
+        cursor: pointer;
+        margin-top: 8px;
+        font-size: 16px;
+        border-radius: 5px;
+        background: rgb(75, 75, 75);
+        color: white;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      .svg_badge {
+        margin-bottom: 15px;
+      }
+
+      .svg_badge_hidden {
+        margin-bottom: 15px;
+        display: none;
+      }
+
+      .logo {
+        margin: 12px auto 0 auto;
+      }
+
+      .epaper_content {
+        margin: auto;
+        width: 200px;
+        height: 200px;
+        border: solid;
+        border-width: 2px;
+        border-color: lightgray;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1 id="title">Will be inserted by customize_thingy_html.py</h1>
+      <img
+        id="logo"
+        src="/thingy_logo"
+        alt="Logo"
+        class="logo"
+        onerror="document.getElementById('logo').remove();document.getElementById('title').style.display = 'block';"
+      />
+      <h5 id="help_text"></h5>
+    </div>
+    <div class="shadow_container">
+      <div class="result_container" id="result_container">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="64"
+          height="64"
+          viewBox="0 0 24 24"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="0"
+          fill="#16c79a"
+          class="svg_badge"
+          id="svg_success"
+        >
+          <path
+            d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12zm14.664-3.247a1 1 0 0 1 .083 1.411l-5.333 6a1 1 0 0 1-1.495 0l-2.666-3a1 1 0 0 1 1.494-1.328l1.92 2.159 4.586-5.16a1 1 0 0 1 1.411-.082z"
+          ></path>
+        </svg>
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="64"
+          height="64"
+          viewBox="0 0 24 24"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="0"
+          fill="#ec4646"
+          class="svg_badge"
+          id="svg_error"
+        >
+          <path
+            d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12zm5.793-4.207a1 1 0 0 1 1.414 0L12 10.586l2.793-2.793a1 1 0 1 1 1.414 1.414L13.414 12l2.793 2.793a1 1 0 0 1-1.414 1.414L12 13.414l-2.793 2.793a1 1 0 0 1-1.414-1.414L10.586 12 7.793 9.207a1 1 0 0 1 0-1.414z"
+          ></path>
+        </svg>
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="64"
+          height="64"
+          viewBox="0 0 24 24"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="0"
+          fill="#ecb746"
+          class="svg_badge"
+          id="svg_info"
+        >
+          <path
+            d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12z"
+          ></path>
+          <path
+            d="M12 10a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1zm1.5-2.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"
+          ></path>
+        </svg>
+
+        <div class="result_text" , id="result_text">OK!</div>
+      </div>
+
+      <div class="column" id="epaper_image_area">
+        <img
+          id="epaper_content"
+          alt="This might be shown on screen."
+          class="epaper_content"
+        />
+        <h5 id="epaper_content_info"></h5>
+      </div>
+
+      <div class="column" id="settings_area">
+        <button id="restart_button">Restart Thingy</button>
+        <button id="clear_wifi_button">Reset WiFi credentials</button>
+        <button id="safeboot_button">Enter SafeBoot</button>
+      </div>
+
+      <div class="column" id="info_area">
+        <hr />
+        <div id="info_texts" class="info_texts">
+          <div class="info_text_container">
+            <div class="info_text_name">Board Name:</div>
+            <div class="info_text_value" id="info_text_board">Unknown</div>
+          </div>
+          <div class="info_text_container">
+            <div class="info_text_name">Thingy Build:</div>
+            <div class="info_text_value" id="info_text_build">Unknown</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="column" id="button_container">
+        <hr />
+        <button id="button_main">&lt&lt Main</button>
+        <button id="button_settings">Settings &gt&gt</button>
+      </div>
+    </div>
+    <script>
+      const epaper_image_area = document.getElementById("epaper_image_area")
+      const info_area = document.getElementById("info_area")
+      const result_container = document.getElementById("result_container")
+      const result_text = document.getElementById("result_text")
+      const svg_success = document.getElementById("svg_success")
+      const svg_error = document.getElementById("svg_error")
+      const svg_info = document.getElementById("svg_info")
+      const restart_button = document.getElementById("restart_button")
+      const safeboot_button = document.getElementById("safeboot_button")
+      const clear_wifi_button = document.getElementById("clear_wifi_button")
+      const button_container = document.getElementById("button_container")
+      const button_main = document.getElementById("button_main")
+      const button_settings = document.getElementById("button_settings")
+      const info_text_board = document.getElementById("info_text_board")
+      const info_text_build = document.getElementById("info_text_build")
+      const help_text = document.getElementById("help_text")
+      const settings_area = document.getElementById("settings_area")
+      const epaper_content = document.getElementById("epaper_content")
+      const epaper_content_info = document.getElementById("epaper_content_info")
+      const no_service_svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ec4646"><path d="M19,19H5V5H19M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M11,15H13V17H11V15M11,7H13V13H11V7" /></svg>'
+      const progress_svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#16c79a"><path d="M12,6V9L16,5L12,1V4A8,8 0 0,0 4,12C4,13.57 4.46,15.03 5.24,16.26L6.7,14.8C6.25,13.97 6,13 6,12A6,6 0 0,1 12,6M18.76,7.74L17.3,9.2C17.74,10.04 18,11 18,12A6,6 0 0,1 12,18V15L8,19L12,23V20A8,8 0 0,0 20,12C20,10.43 19.54,8.97 18.76,7.74Z" /></svg>'
+      const blank_svg =
+        '<?xml version="1.0" encoding="UTF-8"?><svg version="1.1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg>'
+      const epaper_content_state_enum = {
+        idle: Symbol("idle"),
+        not_initialized: Symbol("not_initialized"),
+        in_progress: Symbol("in_progress"),
+        looping: Symbol("looping")
+      }   
+      var epaper_content_state = epaper_content_state_enum.not_initialized
+      var epaper_images = {
+        images: [
+          { name: "Wiped clean!", src: "data:image/svg+xml;base64," + btoa(blank_svg) },
+        ],
+      }
+      var epaper_images_idx = 0;
+
+      showMain()
+      showEPaperContent("Not initialized!", "data:image/svg+xml;base64," + btoa(no_service_svg))
+      
+      epaper_image_area.addEventListener("click", () => {
+        switch (epaper_content_state) {
+          case epaper_content_state_enum.looping:
+            if (epaper_images.images.length > epaper_images_idx) {
+              showEPaperContent(
+                epaper_images.images[epaper_images_idx].name,
+                epaper_images.images[epaper_images_idx].src,
+              )
+              epaper_images_idx++
+            } else {
+              epaper_images_idx = 0
+              showEPaperContent(
+                epaper_images.images[epaper_images_idx].name,
+                epaper_images.images[epaper_images_idx].src,
+              )
+              epaper_images_idx++
+            }
+            break
+          case epaper_content_state_enum.not_initialized:
+            epaper_images_idx = 0
+            showEPaperContent(
+              epaper_images.images[epaper_images_idx].name,
+              epaper_images.images[epaper_images_idx].src,
+            )
+            epaper_content_state = epaper_content_state_enum.looping
+            help_text.innerHTML = "Click the image to show next on ePaperThingy's display."
+            epaper_images_idx++
+            break
+          default:
+            showEPaperContent(
+              "Not initialized!",
+              "data:image/svg+xml;base64," + btoa(no_service_svg),
+            )
+            
+            epaper_content_state = epaper_content_state_enum.looping
+            help_text.innerHTML = "Click the image to initialize ePaperThingy's display."
+        }
+      })
+
+      info_text_board.innerHTML = info_text_board_value
+      info_text_build.innerHTML = info_text_build_value
+
+      button_main.addEventListener("click", () => {
+        showMain()
+      })
+
+      button_settings.addEventListener("click", () => {
+        showSettings()
+      })
+
+      restart_button.addEventListener("click", () => {
+        doSomethingWithThingy("/restart")
+      })
+
+      safeboot_button.addEventListener("click", () => {
+        doSomethingWithThingy("/safeboot")
+      })
+
+      clear_wifi_button.addEventListener("click", () => {
+        doSomethingWithThingy("/clearwifi")
+      })
+
+      getImageList()
+
+      async function getImageList() {
+        console.log("get epaper_images")
+        try {
+          const response = await fetch("/images.json")
+          if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`)
+          }
+
+          const json = await response.json()
+          json.images.forEach(element => {
+            epaper_images.images.push(element)
+          })
+        } catch (error) {
+          console.error(error.message)
+        }
+      }
+
+      function showEPaperContent(name, src) {
+        epaper_content.src = src
+        epaper_content_info.innerHTML = name
+      }
+
+      async function doSomethingWithThingy(url) {
+        showResultContainer()
+        result_text.innerHTML = "Processing..."
+        help_text.innerHTML = " "
+
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Failed! ${response.status}`);
+          }
+
+          svg_info.style.display = "none"
+          svg_success.style.display = "block"
+          result_text.innerHTML = "Success! " + await response.text()
+        } catch (error) {
+          svg_info.style.display = "none"
+          svg_error.style.display = "block"
+          result_text.innerHTML = error.message
+        } finally {
+          refreshHome(7500)
+        }
+      }
+
+      function refreshHome(timeout) {
+        window.setTimeout(function () {
+          window.open("/", "_self")
+        }, timeout)
+      }      
+
+      function showMain() {
+        button_main.style.display = "none"
+        button_settings.style.display = "block"
+        help_text.innerHTML = "Click the image to initialize ePaperThingy's display."
+        settings_area.style.display = "none"
+        info_area.style.display = "none"
+        epaper_image_area.style.display = "block"
+      }
+
+      function showSettings() {
+        button_main.style.display = "block"
+        button_settings.style.display = "none"
+        help_text.innerHTML = "You have entered the Danger Zone."
+        settings_area.style.display = "block"
+        info_area.style.display = "block"
+        epaper_image_area.style.display = "none"
+      }
+
+      function showResultContainer() {
+        info_area.style.display = "none"
+        result_container.style.display = "block"
+        svg_success.style.display = "none"
+        svg_error.style.display = "none"
+        svg_info.style.display = "block"
+        help_text.innerHTML = " "
+        button_container.style.display = "none"
+        settings_area.style.display = "none"
+        epaper_image_area.style.display = "none"
+      }
+    </script>
+  </body>
+</html>

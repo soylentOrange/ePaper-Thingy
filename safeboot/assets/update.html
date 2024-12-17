@@ -178,6 +178,65 @@
       .logo {
         margin: 12px auto 0 auto;
       }
+
+      h4 {
+        font-size: 16px;
+        color: gray;
+        margin: auto;
+      }
+
+      .switch_container {
+        display: flex;
+        margin-top: 15px;
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        min-width: 60px;
+        height: 26px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgb(75, 75, 75);
+        -webkit-transition: 0.2s;
+        transition: 0.2s;
+        border-radius: 26px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: 0.2s;
+        transition: 0.2s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider:before {
+        -webkit-transform: translateX(34px);
+        -ms-transform: translateX(34px);
+        transform: translateX(34px);
+      }
     </style>
   </head>
   <body>
@@ -185,12 +244,12 @@
       <h1 id="title">Will be inserted by customize_update_html.py</h1>
       <img
         id="logo"
-        src="/logo"
+        src="/captive_logo"
         alt="Logo"
         class="logo"
         onerror="document.getElementById('logo').remove();document.getElementById('title').style.display = 'block';"
       />
-      <h5>Upload new firmware here, or via Over-the-Air (OTA) update in PlatformIO.</h5>
+      <h5 id="help_text">Upload a firmware/file system image here, or via Over-the-Air (OTA) update in PlatformIO.</h5>
     </div>
     <div class="shadow_container">
       <div class="drop_zone" id="drop_zone">
@@ -210,6 +269,15 @@
         </svg>
         <h2>Drag and drop here</h2>
         <h6 id="clickable_file_input">or<br />click to select (.bin) file</h6>
+      </div>
+
+      <div class="switch_container" id="switch_container">
+        <h4 id="label_firmware">Firmware</h4>
+        <label class="switch">
+          <input type="checkbox" id="checkbox_mode" />
+          <span class="slider"></span>
+        </label>
+        <h4 id="label_filesystem">File System</h4>
       </div>
 
       <div class="progress_container" id="progress_container">
@@ -315,8 +383,18 @@
       const restart_button = document.getElementById("restart_button")
       const info_text_board = document.getElementById("info_text_board")
       const info_text_build = document.getElementById("info_text_build")
+      const help_text = document.getElementById("help_text")
       const clickable_file_input = document.getElementById("clickable_file_input")
-      const xhr = new XMLHttpRequest()
+      const label_firmware = document.getElementById("label_firmware")
+      const label_filesystem = document.getElementById("label_filesystem")
+      const switch_container = document.getElementById("switch_container")
+      const checkbox_mode = document.getElementById("checkbox_mode")
+      const checkbox_mode_enum = {
+        firmware: Symbol("firmware"),
+        filesystem: Symbol("filesystem"),
+      }
+      
+      var checkbox_mode_value = checkbox_mode_enum.firmware
 
       if (navigator.userAgent.match(".*(AppleWebKit){1}.*(\(KHTML, like Gecko\).?)$", )) {
         clickable_file_input.innerHTML = "accepts<br />one firmware (.bin) file"
@@ -324,6 +402,24 @@
 
       info_text_board.innerHTML = info_text_board_value
       info_text_build.innerHTML = info_text_build_value
+
+      label_firmware.style.color = "black"
+
+      checkbox_mode.addEventListener("input", function () {
+        switch (checkbox_mode_value) {
+          case checkbox_mode_enum.firmware:
+            checkbox_mode_value = checkbox_mode_enum.filesystem
+            label_firmware.style.color = "gray"
+            label_filesystem.style.color = "black"
+            fetch("/ota_mode_fs")
+            break
+          default:
+            label_firmware.style.color = "black"
+            label_filesystem.style.color = "gray"
+            checkbox_mode_value = checkbox_mode_enum.firmware
+            fetch("/ota_mode_fw")
+        }
+      })
 
       file_input.type = "file"
       file_input.accept = ".bin"
@@ -369,30 +465,28 @@
         restartThingy()
       })
 
-      function restartThingy() {
-        const url = "/restart"
-        xhr.addEventListener("load", restartSuccessHandler)
-        xhr.addEventListener("error", restartErrorHandler)
-        xhr.open("GET", url)
-        xhr.send()
+      async function restartThingy() {
         showResultContainer()
         result_text.innerHTML = "Processing..."
-      }
+        help_text.innerHTML = " "
 
-      function restartSuccessHandler(e) {
-        svg_info.style.display = "none"
-        svg_success.style.display = "block"
-        result_text.innerHTML = "Success! Restarting now..."
+        const url = "/restart"
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Failed! ${response.status}`);
+          }
 
-        refreshHome(7500)
-      }
-
-      function restartErrorHandler(e) {
-        svg_info.style.display = "none"
-        svg_error.style.display = "block"
-        result_text.innerHTML = "Failed with status " + xhr.status
-
-        refreshHome(7500)
+          svg_info.style.display = "none"
+          svg_success.style.display = "block"
+          result_text.innerHTML = "Success! " + await response.text()
+        } catch (error) {
+          svg_info.style.display = "none"
+          svg_error.style.display = "block"
+          result_text.innerHTML = error.message
+        } finally {
+          refreshHome(7500)
+        }
       }
 
       function uploadFile(fileList) {
@@ -402,6 +496,7 @@
         data.append("file", fileList[0])
         const url = "/update?size=" + fileList[0].size
         showProgressContainer()
+        const xhr = new XMLHttpRequest()
         xhr.upload.addEventListener("progress", (event) => {
           updateProgressBar(event.loaded / event.total)
         })
@@ -411,20 +506,27 @@
         xhr.send(data)
       }
 
-      function uploadSuccessHandler(e) {
+      function uploadSuccessHandler(event) {
         showResultContainer()
-        svg_success.style.display = "block"
+        help_text.innerHTML = " "
         svg_info.style.display = "none"
-        result_text.innerHTML = xhr.responseText
+        if (this.status == 200) {
+          svg_success.style.display = "block"
+          result_text.innerHTML = this.responseText
+        } else {
+          svg_error.style.display = "block"
+          result_text.innerHTML = "OTA failed: " + this.responseText + ". Restarting now..."
+        }        
 
         refreshHome(7500)
       }
 
-      function uploadErrorHandler(e) {
+      function uploadErrorHandler(event) {
         showResultContainer()
+        help_text.innerHTML = " "
         svg_error.style.display = "block"
         svg_info.style.display = "none"        
-        result_text.innerHTML = xhr.responseText
+        result_text.innerHTML = "OTA failed: status " + this.status + "! Restarting now..."
 
         refreshHome(7500)
       }
@@ -465,6 +567,8 @@
         drop_zone.style.display = "none"
         progress_container.style.display = "block"
         info_area.style.display = "none"
+        help_text.innerHTML = " "
+        switch_container.style.display = "none"
       }
 
       function showResultContainer() {
@@ -475,6 +579,8 @@
         svg_success.style.display = "none"
         svg_error.style.display = "none"
         svg_info.style.display = "block"
+        help_text.innerHTML = " "
+        switch_container.style.display = "none"
       }
       
     </script>

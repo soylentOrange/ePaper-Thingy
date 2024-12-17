@@ -9,20 +9,22 @@
 #include <ArduinoOTA.h>
 #include <WiFi.h>
 #include <Update.h>
+#include <esp_partition.h>
+#include <esp_ota_ops.h>
 
-// gzipped favicons and update website
-extern const uint8_t update_html_start[] asm("_binary__pio_data_update_html_gz_start");
-extern const uint8_t update_html_end[] asm("_binary__pio_data_update_html_gz_end");
-extern const uint8_t hotspot_detect_html_start[] asm("_binary__pio_data_hotspot_detect_html_gz_start");
-extern const uint8_t hotspot_detect_html_end[] asm("_binary__pio_data_hotspot_detect_html_gz_end");
-extern const uint8_t favicon_svg_start[] asm("_binary__pio_data_favicon_svg_gz_start");
-extern const uint8_t favicon_svg_end[] asm("_binary__pio_data_favicon_svg_gz_end");
-extern const uint8_t favicon_96_png_start[] asm("_binary__pio_data_favicon_96x96_png_gz_start");
-extern const uint8_t favicon_96_png_end[] asm("_binary__pio_data_favicon_96x96_png_gz_end");
-extern const uint8_t favicon_32_png_start[] asm("_binary__pio_data_favicon_32x32_png_gz_start");
-extern const uint8_t favicon_32_png_end[] asm("_binary__pio_data_favicon_32x32_png_gz_end");
-extern const uint8_t logo_start[] asm("_binary__pio_data_logo_safeboot_svg_gz_start");
-extern const uint8_t logo_end[] asm("_binary__pio_data_logo_safeboot_svg_gz_end");
+// gzipped assets
+extern const uint8_t update_html_start[] asm("_binary__pio_assets_update_html_gz_start");
+extern const uint8_t update_html_end[] asm("_binary__pio_assets_update_html_gz_end");
+extern const uint8_t hotspot_detect_html_start[] asm("_binary__pio_assets_hotspot_detect_html_gz_start");
+extern const uint8_t hotspot_detect_html_end[] asm("_binary__pio_assets_hotspot_detect_html_gz_end");
+extern const uint8_t favicon_svg_start[] asm("_binary__pio_assets_favicon_svg_gz_start");
+extern const uint8_t favicon_svg_end[] asm("_binary__pio_assets_favicon_svg_gz_end");
+extern const uint8_t favicon_96_png_start[] asm("_binary__pio_assets_favicon_96x96_png_gz_start");
+extern const uint8_t favicon_96_png_end[] asm("_binary__pio_assets_favicon_96x96_png_gz_end");
+extern const uint8_t favicon_32_png_start[] asm("_binary__pio_assets_favicon_32x32_png_gz_start");
+extern const uint8_t favicon_32_png_end[] asm("_binary__pio_assets_favicon_32x32_png_gz_end");
+extern const uint8_t logo_start[] asm("_binary__pio_assets_logo_safeboot_svg_gz_start");
+extern const uint8_t logo_end[] asm("_binary__pio_assets_logo_safeboot_svg_gz_end");
 
 void SafeBootOTAConnect::begin(const char* hostname, const char* apSSID, const char* apPassword) {
     if (_state != SafeBootOTAConnect::State::NETWORK_DISABLED)
@@ -141,6 +143,8 @@ void SafeBootOTAConnect::loop() {
     // Nothing has been uploaded...
     // Restart into the main app after timeout
     if (_state == SafeBootOTAConnect::State::OTA_UPDATER_TIMEOUT) {
+        log_d("Restarting after Timeout of OTA-Updater.");
+        _setState(SafeBootOTAConnect::State::NETWORK_DISABLED);
         _restartDelayed();
     }
 }
@@ -164,9 +168,17 @@ void SafeBootOTAConnect::_setState(SafeBootOTAConnect::State state) {
 }
 
 void SafeBootOTAConnect::_restartDelayed(uint32_t msDelayBeforeCleanup, uint32_t msDelayBeforeRestart) {
-    _doingRestart = true;
     _delayedTask.detach();
     _delayBeforeRestart = msDelayBeforeRestart;
+
+    // Set next boot partition
+    const esp_partition_t* partition = esp_partition_find_first(esp_partition_type_t::ESP_PARTITION_TYPE_APP, esp_partition_subtype_t::ESP_PARTITION_SUBTYPE_APP_OTA_0, nullptr);
+    if (partition) {
+        log_d("Next boot partition set successfully.");
+        esp_ota_set_boot_partition(partition);
+    } else {
+        log_e("Could not set next boot partition!");
+    }    
     _delayedTask.once_ms(msDelayBeforeCleanup, [&]{_doCleanupAndRestart();});
 }
 
@@ -272,22 +284,21 @@ void SafeBootOTAConnect::_enableOTAServices() {
 
     // handle firmware upload
     _httpd->on("/update", HTTP_POST, [&](AsyncWebServerRequest *request) {
-        _otaResultString = Update.hasError() ? Update.errorString() : "OTA successful!";
-        _otaResultString += " Restarting now...";
+        _otaResultString = Update.hasError() ? Update.errorString() : "OTA successful! Restarting now...";
         log_d("/update: %s", _otaResultString.c_str());
-        _otaSuccess = !Update.hasError();
-        _otaFinished = true;
         AsyncWebServerResponse* response = request->beginResponse(Update.hasError() ? 502 : 200, "text/plain", 
             _otaResultString.c_str());
         response->addHeader("Connection", "close");
         request->send(response);
         _restartDelayed(1000, 1000);
     },[&](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
-        if(!index){
-            log_d("otaStarted...");
+        if (!index) {           
             _lastTime = -1;
+
+            log_d("otaStarted: %s", static_cast<int>(_otaMode) == U_FLASH ? "Firmware" : "Filesystem");
             log_i("Receiving Update: %s, Size: %d", filename.c_str(), len);
-            if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)) {
+
+            if(!Update.begin(UPDATE_SIZE_UNKNOWN, static_cast<int>(_otaMode))) {
                 log_e("Update error: %s", Update.errorString());
             }
         }
@@ -333,7 +344,7 @@ void SafeBootOTAConnect::_enableOTAServices() {
     });
 
     // serve the logo
-    _httpd->on("/logo", HTTP_GET, [](AsyncWebServerRequest* request) {
+    _httpd->on("/captive_logo", HTTP_GET, [](AsyncWebServerRequest* request) {
         log_d("Serve logo");
         AsyncWebServerResponse* response = request->beginResponse(200, "image/svg+xml", logo_start, logo_end - logo_start);
         response->addHeader("Content-Encoding", "gzip");
@@ -341,30 +352,29 @@ void SafeBootOTAConnect::_enableOTAServices() {
         request->send(response);
     });
 
+    // set OTA Mode: Firmware
+    _httpd->on("/ota_mode_fw", HTTP_GET, [&](AsyncWebServerRequest* request) {
+        log_d("ota_mode: Firmware");
+        AsyncWebServerResponse* response = request->beginResponse(200, "text/plain", "Firmware");
+        request->send(response);
+        setOTAMode(OTAMode::Firmware);
+    });
+
+    // set OTA Mode: File System
+    _httpd->on("/ota_mode_fs", HTTP_GET, [&](AsyncWebServerRequest* request) {
+        log_d("ota_mode: Filesystem");
+        AsyncWebServerResponse* response = request->beginResponse(200, "text/plain", "Filesystem");
+        request->send(response);
+        setOTAMode(OTAMode::Filesystem);
+    });
+
     // do restart
     _httpd->on("/restart", HTTP_GET, [&](AsyncWebServerRequest* request) {
         log_d("Restarting now...");
-        _doingRestart = true;
-        AsyncWebServerResponse* response = request->beginResponse(200, "text/plain", "Restarting now...");
-        request->send(response);   
         _restartDelayed();     
-    });
-
-    // Serve restart info
-    _httpd->on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
-        log_d("Serve restart info...");
         AsyncWebServerResponse* response = request->beginResponse(200, "text/plain", "Restarting now...");
-        response->addHeader("Refresh", "5");
         request->send(response);
-    }).setFilter([&](__unused AsyncWebServerRequest* request) { return _doingRestart; });
-
-    // Serve restart info
-    _httpd->on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
-        log_d("Serve restart info after OTA...");
-        AsyncWebServerResponse* response = request->beginResponse(_otaSuccess ? 200 : 502, "text/plain", _otaResultString.c_str());
-        response->addHeader("Refresh", "5");
-        request->send(response);
-    }).setFilter([&](__unused AsyncWebServerRequest* request) { return _otaFinished; });
+    });
 
     // Serve the OTA-Update website
     _httpd->on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
@@ -372,7 +382,7 @@ void SafeBootOTAConnect::_enableOTAServices() {
         AsyncWebServerResponse* response = request->beginResponse(200, "text/html", update_html_start, update_html_end - update_html_start);
         response->addHeader("Content-Encoding", "gzip");
         request->send(response);
-    }).setFilter([&](__unused AsyncWebServerRequest* request) { return (_state == SafeBootOTAConnect::State::OTA_UPDATER_STARTED) && !(_otaFinished || _doingRestart); });
+    }).setFilter([&](__unused AsyncWebServerRequest* request) { return _state == SafeBootOTAConnect::State::OTA_UPDATER_STARTED; });
 
     // serve apple CNA request
     _httpd->on("/hotspot-detect.html", [&](AsyncWebServerRequest* request) {
@@ -454,5 +464,15 @@ void SafeBootOTAConnect::_onWiFiEvent(WiFiEvent_t event) {
 
         default:
             break;
+    }
+}
+
+void SafeBootOTAConnect::setOTAMode(SafeBootOTAConnect::OTAMode otaMode) {
+    switch (otaMode) {
+        case OTAMode::Filesystem:
+            _otaMode = U_SPIFFS;
+            break;
+        default:
+            _otaMode = U_FLASH;
     }
 }
