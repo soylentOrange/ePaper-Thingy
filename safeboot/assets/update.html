@@ -169,6 +169,12 @@
         border-radius: 5px;
         background: rgb(75, 75, 75);
         color: white;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
       }
 
       .svg_badge {
@@ -185,57 +191,94 @@
         margin: auto;
       }
 
-      .switch_container {
+      .mode_switch_container {
         display: flex;
         margin-top: 15px;
         padding-left: 10px;
         padding-right: 10px;
       }
 
-      .switch {
-        position: relative;
-        display: inline-block;
-        width: 60px;
-        min-width: 60px;
+      .toggle_switch_container {
+        width: 51px;
         height: 26px;
+        position: relative;
       }
 
-      .switch input {
+      .toggle_switch_checkbox {
         opacity: 0;
         width: 0;
         height: 0;
+        position: absolute;
       }
 
-      .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+      .toggle_switch_switch {
+        width: 100%;
+        height: 100%;
+        display: block;
         background-color: rgb(75, 75, 75);
-        -webkit-transition: 0.2s;
-        transition: 0.2s;
-        border-radius: 26px;
+        border-radius: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease-out;
       }
 
-      .slider:before {
+      .toggle_switch_slider {
+        width: 20px;
+        height: 20px;
         position: absolute;
-        content: "";
-        height: 18px;
-        width: 18px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        -webkit-transition: 0.2s;
-        transition: 0.2s;
+        left: calc(50% - 20px / 2 - 12px);
+        top: calc(50% - 20px / 2);
         border-radius: 50%;
+        background: white;
+        transition: all 0.2s ease-out;
+        cursor: pointer;
       }
 
-      input:checked + .slider:before {
-        -webkit-transform: translateX(34px);
-        -ms-transform: translateX(34px);
-        transform: translateX(34px);
+      .toggle_switch_checkbox:checked
+        + .toggle_switch_switch
+        .toggle_switch_slider {
+        left: calc(50% - 20px / 2 + 12px);
+        top: calc(50% - 20px / 2);
+      }
+
+      .loader_badge {
+        margin-bottom: 15px;
+        width: 65px;
+        height: 65px;
+      }
+
+      .loader_badge > .loader {
+        margin-top: 7px;
+        margin-bottom: 0;
+      }
+
+      .loader {
+        border: 6px solid lightgray;
+        border-radius: 50%;
+        border-top: 6px solid rgb(75, 75, 75);
+        margin-top: 69px;
+        width: 46px;
+        height: 46px;
+        -webkit-animation: spin 1s linear infinite;
+        animation: spin 1s linear infinite;
+        cursor: wait;
+      }
+
+      @-webkit-keyframes spin {
+        0% {
+          -webkit-transform: rotate(0deg);
+        }
+        100% {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
     </style>
   </head>
@@ -271,12 +314,18 @@
         <h6 id="clickable_file_input">or<br />click to select (.bin) file</h6>
       </div>
 
-      <div class="switch_container" id="switch_container">
+      <div class="mode_switch_container" id="mode_switch_container">
         <h4 id="label_firmware">Firmware</h4>
-        <label class="switch">
-          <input type="checkbox" id="checkbox_mode" />
-          <span class="slider"></span>
-        </label>
+        <div class="toggle_switch_container">
+          <input
+            type="checkbox"
+            class="toggle_switch_checkbox"
+            id="toggle_switch_checkbox"
+          />
+          <label class="toggle_switch_switch" for="toggle_switch_checkbox">
+            <span class="toggle_switch_slider"></span>
+          </label>
+        </div>
         <h4 id="label_filesystem">File System</h4>
       </div>
 
@@ -298,8 +347,8 @@
       <div class="result_container" id="result_container">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="64"
-          height="64"
+          width="72"
+          height="72"
           viewBox="0 0 24 24"
           stroke-linecap="round"
           stroke-linejoin="round"
@@ -315,8 +364,8 @@
 
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="64"
-          height="64"
+          width="72"
+          height="72"
           viewBox="0 0 24 24"
           stroke-linecap="round"
           stroke-linejoin="round"
@@ -330,25 +379,9 @@
           ></path>
         </svg>
 
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="64"
-          height="64"
-          viewBox="0 0 24 24"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="0"
-          fill="#ecb746"
-          class="svg_badge"
-          id="svg_info"
-        >
-          <path
-            d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12z"
-          ></path>
-          <path
-            d="M12 10a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1zm1.5-2.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"
-          ></path>
-        </svg>
+        <div class="loader_badge" id="result_loader_animation">
+          <div class="loader"></div>
+        </div>
 
         <div class="result_text" , id="result_text">OK!</div>
       </div>
@@ -372,6 +405,7 @@
       const file_input = document.createElement("input")
       const progress_bar = document.getElementById("progress_bar")
       const progress_container = document.getElementById("progress_container")
+      const result_loader = document.getElementById("result_loader_animation") 
       const drop_zone = document.getElementById("drop_zone")
       const progress_text = document.getElementById("progress_text")
       const info_area = document.getElementById("info_area")
@@ -379,7 +413,6 @@
       const result_text = document.getElementById("result_text")
       const svg_success = document.getElementById("svg_success")
       const svg_error = document.getElementById("svg_error")
-      const svg_info = document.getElementById("svg_info")
       const restart_button = document.getElementById("restart_button")
       const info_text_board = document.getElementById("info_text_board")
       const info_text_build = document.getElementById("info_text_build")
@@ -387,14 +420,8 @@
       const clickable_file_input = document.getElementById("clickable_file_input")
       const label_firmware = document.getElementById("label_firmware")
       const label_filesystem = document.getElementById("label_filesystem")
-      const switch_container = document.getElementById("switch_container")
-      const checkbox_mode = document.getElementById("checkbox_mode")
-      const checkbox_mode_enum = {
-        firmware: Symbol("firmware"),
-        filesystem: Symbol("filesystem"),
-      }
-      
-      var checkbox_mode_value = checkbox_mode_enum.firmware
+      const mode_container = document.getElementById("mode_switch_container")
+      const mode_checkbox = document.getElementById("toggle_switch_checkbox")
 
       if (navigator.userAgent.match(".*(AppleWebKit){1}.*(\(KHTML, like Gecko\).?)$", )) {
         clickable_file_input.innerHTML = "accepts<br />one firmware (.bin) file"
@@ -405,19 +432,13 @@
 
       label_firmware.style.color = "black"
 
-      checkbox_mode.addEventListener("input", function () {
-        switch (checkbox_mode_value) {
-          case checkbox_mode_enum.firmware:
-            checkbox_mode_value = checkbox_mode_enum.filesystem
-            label_firmware.style.color = "gray"
-            label_filesystem.style.color = "black"
-            fetch("/ota_mode_fs")
-            break
-          default:
-            label_firmware.style.color = "black"
-            label_filesystem.style.color = "gray"
-            checkbox_mode_value = checkbox_mode_enum.firmware
-            fetch("/ota_mode_fw")
+      mode_checkbox.addEventListener("change", function () {
+        if (mode_checkbox.checked) {
+          label_firmware.style.color = "gray"
+          label_filesystem.style.color = "black"
+        } else {
+          label_firmware.style.color = "black"
+          label_filesystem.style.color = "gray"
         }
       })
 
@@ -477,11 +498,11 @@
             throw new Error(`Failed! ${response.status}`);
           }
 
-          svg_info.style.display = "none"
+          result_loader.style.display = "none"
           svg_success.style.display = "block"
           result_text.innerHTML = "Success! " + await response.text()
         } catch (error) {
-          svg_info.style.display = "none"
+          result_loader.style.display = "none"
           svg_error.style.display = "block"
           result_text.innerHTML = error.message
         } finally {
@@ -489,27 +510,49 @@
         }
       }
 
-      function uploadFile(fileList) {
+      async function uploadFile(fileList) {
+        try {
+          const mode_url = mode_checkbox.checked ? "/ota_mode_fs" : "/ota_mode_fw"
+          const response = await fetch(mode_url);
+          if (!response.ok) {
+            throw new Error(`Failed setting OTA mode! ${response.status}`);
+          }
+        } catch (error) {
+          drop_zone.animate(
+            [{ border: "1px solid red" }, { border: "1px dashed gray" }],
+            {
+              duration: 500,
+              iterations: 5,
+            },
+          )
+          console.log(error.message)
+        } 
+
         var filename_text = document.getElementById("filename_text")
         filename_text.innerHTML = "Uploading: " + fileList[0].name
         var data = new FormData()
-        data.append("file", fileList[0])
-        const url = "/update?size=" + fileList[0].size
+        data.append("file", fileList[0])        
+
         showProgressContainer()
+        const url = "/update?size=" + fileList[0].size
         const xhr = new XMLHttpRequest()
         xhr.upload.addEventListener("progress", (event) => {
           updateProgressBar(event.loaded / event.total)
         })
-        xhr.addEventListener("load", uploadSuccessHandler)
+        xhr.addEventListener("load", () => {
+          showResultContainer()
+          result_text.innerHTML = "Processing..."
+          help_text.innerHTML = " "
+        })
+        xhr.addEventListener("loadend", uploadFinalSuccessHandler);
         xhr.addEventListener("error", uploadErrorHandler)
         xhr.open("POST", url)
         xhr.send(data)
       }
 
-      function uploadSuccessHandler(event) {
-        showResultContainer()
+      function uploadFinalSuccessHandler(event) {
         help_text.innerHTML = " "
-        svg_info.style.display = "none"
+        result_loader.style.display = "none"
         if (this.status == 200) {
           svg_success.style.display = "block"
           result_text.innerHTML = this.responseText
@@ -525,7 +568,7 @@
         showResultContainer()
         help_text.innerHTML = " "
         svg_error.style.display = "block"
-        svg_info.style.display = "none"        
+        result_loader.style.display = "none"        
         result_text.innerHTML = "OTA failed: status " + this.status + "! Restarting now..."
 
         refreshHome(7500)
@@ -568,7 +611,7 @@
         progress_container.style.display = "block"
         info_area.style.display = "none"
         help_text.innerHTML = " "
-        switch_container.style.display = "none"
+        mode_container.style.display = "none"
       }
 
       function showResultContainer() {
@@ -578,9 +621,9 @@
         result_container.style.display = "block"
         svg_success.style.display = "none"
         svg_error.style.display = "none"
-        svg_info.style.display = "block"
+        result_loader.style.display = "block"
         help_text.innerHTML = " "
-        switch_container.style.display = "none"
+        mode_container.style.display = "none"
       }
       
     </script>
