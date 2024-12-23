@@ -44,40 +44,40 @@ void EventHandlerClass::_eventHandlerCallback() {
     if (_previous != _state) {
         switch (_state) {
             case Mycila::ESPConnect::State::NETWORK_CONNECTED:
-                LOGI(TAG, "====> Connected to network...");
+                LOGI(TAG, "--> Connected to network...");
                 yield();
-                LOGI(TAG, "IPAddress is: %s", espConnect.getIPAddress().toString().c_str());
+                LOGI(TAG, "IPAddress: %s", espConnect.getIPAddress().toString().c_str());
                 WebServer.begin();
                 yield();
                 WebSite.begin();
                 break;
 
             case Mycila::ESPConnect::State::AP_STARTED:
-                LOGI(TAG, "====> Created AP...");
+                LOGI(TAG, "--> Created AP...");
                 yield();
-                LOGI(TAG, "SSID is: %s", espConnect.getIPAddress().toString().c_str());
-                LOGI(TAG, "IPAddress is: %s", espConnect.getIPAddress().toString().c_str());
+                LOGI(TAG, "SSID: %s", espConnect.getAccessPointSSID().c_str());
+                LOGI(TAG, "IPAddress: %s", espConnect.getIPAddress().toString().c_str());
                 WebServer.begin();
                 yield();
                 WebSite.begin();
                 break;
 
             case Mycila::ESPConnect::State::PORTAL_STARTED:
-                LOGI(TAG, "====> Started Captive Portal...");
+                LOGI(TAG, "--> Started Captive Portal...");
                 yield();
-                LOGI(TAG, "SSID is: %s", espConnect.getIPAddress().toString().c_str());
-                LOGI(TAG, "IPAddress is: %s", espConnect.getIPAddress().toString().c_str());
+                LOGI(TAG, "SSID: %s", espConnect.getAccessPointSSID().c_str());
+                LOGI(TAG, "IPAddress: %s", espConnect.getIPAddress().toString().c_str());
                 WebServer.begin();
                 break;
 
             case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
-                LOGI(TAG, "====> Disconnected from network...");
+                LOGI(TAG, "--> Disconnected from network...");
                 WebSite.end();
                 WebServer.end();
                 break;
 
             case Mycila::ESPConnect::State::PORTAL_COMPLETE: {
-                LOGI(TAG, "====> Captive Portal has ended, auto-save the configuration...");
+                LOGI(TAG, "--> Captive Portal has ended, auto-save the configuration...");
                 auto config = espConnect.getConfig();
                 LOGD(TAG, "ap: %d", config.apMode);
                 LOGD(TAG, "wifiSSID: %s", config.wifiSSID.c_str());
