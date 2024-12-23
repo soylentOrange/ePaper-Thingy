@@ -95,6 +95,12 @@ void WebSiteClass::_websiteCallback() {
     // serve from File System
     webServer.serveStatic("/images.json", LittleFS, "/images.json", "no-store").setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
 
+    // serve request for display state
+    webServer.on("/display/state", HTTP_GET, [](AsyncWebServerRequest* request) {
+        LOGD(TAG, "Serve /display/state");
+        request->send(200, "application/json", "{\"state\":\"not_initialized\", \"img_idx\":-1}");
+    }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; }); 
+
     // serve the logo (for main page)
     webServer.on("/thingy_logo", HTTP_GET, [](AsyncWebServerRequest* request) {
         LOGD(TAG, "Serve thingy logo...");

@@ -89,10 +89,13 @@ void WebServerClass::_webServerCallback() {
 
     // Set 404-handler only when the captive portal is not shown
     if (EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED) {
+        LOGD(TAG, "Register 404 handler in WebServer");
         webServer.onNotFound([](AsyncWebServerRequest* request) {
             LOGW(TAG, "Send 404 on request for %s", request->url().c_str());
             request->send(404);
         });
+    } else {
+        LOGD(TAG, "Skip registering 404 handler in WebServer");
     }    
 
     webServer.begin();
