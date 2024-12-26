@@ -52,7 +52,8 @@ for filename in ['thingy.html']:
                     lines += line
                     lines += f"      const info_text_board_value = \"{board}\"\n"
                     lines += f"      const info_text_build_value = \"{timestamp}\"\n"
-                else:
+                elif not any(value in line for value in ("// ", "<!-- ")):
+                    # copy current line except for line comments
                     lines += line
 
             outputFile.write(lines)
