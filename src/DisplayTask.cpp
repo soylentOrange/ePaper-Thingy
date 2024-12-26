@@ -11,7 +11,9 @@ DisplayClass::DisplayClass()
         NULL, false, NULL, NULL, false)
     , _display(GxEPD2_154_Z90c(DISPLAY_PIN_CS, DISPLAY_PIN_DC, DISPLAY_PIN_RST, DISPLAY_PIN_BUSY))
     , _hspi(HSPI)
-    , _pScheduler(nullptr) {        
+    , _pScheduler(nullptr) {    
+    _srBusy.setWaiting();
+    _srInitialized.setWaiting();   
 }
 
 void DisplayClass::begin(Scheduler* scheduler) {
@@ -58,19 +60,9 @@ void DisplayClass::_initializeDisplayCallback() {
     // a blank image (with text...)
     _display.setRotation(1);
     _display.setFont(&FreeSans12pt7b);
-    //_display.setTextColor(GxEPD_BLACK);
-    // _display.setTextColor(GxEPD_RED);    
-    // int16_t tbx, tby; uint16_t tbw, tbh;
-    // _display.getTextBounds("ePaperThingy", 0, 0, &tbx, &tby, &tbw, &tbh);
-    
-    // // center bounding box by transposition of origin:
-    // uint16_t x = ((_display.width() - tbw) / 2) - tbx;
-    // uint16_t y = ((_display.height() - tbh) / 2) - tby;
     _display.firstPage();
     do {
         _display.fillScreen(GxEPD_WHITE);
-        // _display.setCursor(x, y);
-        // _display.print("ePaperThingy");
         yield();
     } while (_display.nextPage());
 

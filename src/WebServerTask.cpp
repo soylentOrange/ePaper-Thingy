@@ -16,6 +16,7 @@ WebServerClass::WebServerClass()
     : _webServer(TASK_IMMEDIATE, TASK_ONCE, [&] { _webServerCallback(); }, 
         NULL, false, NULL, NULL, false)
     , _pScheduler(nullptr) {
+    _sr.setWaiting();
 }
 
 void WebServerClass::begin(Scheduler* scheduler) {
@@ -33,6 +34,7 @@ void WebServerClass::end() {
     LOGD(TAG, "Disabling WebServer-Task...");
     _webServer.disable();
     _pScheduler->deleteTask(_webServer);
+    _sr.setWaiting();
     webServer.end();
     LOGD(TAG, "WebServer-Task disabled!");
 }
