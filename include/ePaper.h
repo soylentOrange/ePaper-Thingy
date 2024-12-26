@@ -16,6 +16,7 @@
 #include <ESPRestartTask.h>
 #include <EventHandlerTask.h>
 #include <ESPConnectTask.h>
+#include <DisplayTask.h>
 
 // in main.cpp
 extern AsyncWebServer webServer;    

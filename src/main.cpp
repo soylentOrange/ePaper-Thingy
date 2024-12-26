@@ -23,7 +23,7 @@ void setup() {
         // USB-CDC doesn't need a baud rate
         Serial.begin();
 
-        // Enabling Debug via USB-CDC is handled via framework
+        // Note: Enabling Debug via USB-CDC is handled via framework
     #endif
 
     // Get reason for restart
@@ -32,14 +32,18 @@ void setup() {
     // Initialize the Scheduler
     scheduler.init();
 
+    // Add Display-Task to Scheduler
+    Display.begin(&scheduler);
+
     // Add Restart-Task to Scheduler
-    ESPRestart.begin();
+    ESPRestart.begin(&scheduler);
 
     // Add EventHandler to Scheduler
-    EventHandler.begin();
+    // Will also spawn the WebServer and WebSite (when ESPConnect says so...)
+    EventHandler.begin(&scheduler);
 
     // Add ESPConnect-Task to Scheduler
-    ESPConnect.begin();
+    ESPConnect.begin(&scheduler);
 }
 
 void loop() {

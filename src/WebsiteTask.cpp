@@ -20,85 +20,139 @@ extern const uint8_t thingy_html_start[] asm("_binary__pio_assets_thingy_html_gz
 extern const uint8_t thingy_html_end[] asm("_binary__pio_assets_thingy_html_gz_end");
 
 WebSiteClass::WebSiteClass()
-    : _website(TASK_SECOND, TASK_ONCE, std::bind(&WebSiteClass::_websiteCallback, this), 
-        NULL, false) {
+    : _website(TASK_IMMEDIATE, TASK_ONCE, [&] { _websiteCallback(); }, 
+        NULL, false, NULL, NULL, false)
+    , _imageIdx(0)
+    , _showImageHandler(nullptr)
+    , _imagesJson(nullptr)
+    , _imageCount(0)
+    , _pScheduler(nullptr) {
 }
 
-void WebSiteClass::begin() {
+void WebSiteClass::begin(Scheduler* scheduler) {
     LOGD(TAG, "Enabling Website-Task...");
-    scheduler.addTask(_website);
+
+    // Task handling
+    _pScheduler = scheduler;
+    _pScheduler->addTask(_website);
+    _website.waitFor(WebServer.getStatusRequest());
     _website.enable();
 }
 
 void WebSiteClass::end() {
     LittleFS.end();
-    scheduler.deleteTask(_website);
+    if (_showImageHandler != nullptr) {
+        delete _showImageHandler;
+        _showImageHandler = nullptr;
+    }
+    if (_imagesJson != nullptr) {
+        delete _imagesJson;
+        _imagesJson = nullptr;
+    }
+    _website.disable();
+    _pScheduler->deleteTask(_website);
 }
-
-// void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
-//     Serial.printf("Listing directory: %s\r\n", dirname);
-
-//     File root = fs.open(dirname);
-
-//     if(!root){
-//         Serial.println("- failed to open directory");
-//         return;
-//     }
-//     if(!root.isDirectory()){
-//         Serial.println(" - not a directory");
-//         return;
-//     }
-
-//     File file = root.openNextFile();
-//     while(file){
-//         if(file.isDirectory()){
-//             Serial.print("  DIR : ");
-//             Serial.println(file.name());
-//             if(levels){
-//                 #ifdef ARDUINO_ARCH_ESP8266
-//                 listDir(fs, file.fullName(), levels -1);
-//                 #else
-//                 listDir(fs, file.path(), levels -1);
-//                 #endif
-//             }
-//         } else {
-//             Serial.print("  FILE: ");
-//             Serial.print(file.name());
-//             Serial.print("\tSIZE: ");
-//             Serial.println(file.size());
-//         }
-//         file = root.openNextFile();
-//     }
-// }
 
 // Add Handlers to the webserver
 void WebSiteClass::_websiteCallback() {
     LOGD(TAG, "Starting WebSite...");
-    
-    // Only enable when network is connected or AP (!Portal) is started and the Webserver is running
-    if(!WebServer.isRunning()) {
-        LOGE(TAG, "Website-Task cannot be enabled!");
-        return;
-    }
 
+    // Mount the FS, and try reading /images.json
     LOGD(TAG, "Mounting littleFS...");
     if (!LittleFS.begin(false)) {
         LOGE(TAG, "An Error has occurred while mounting LittleFS!");      
     } else {
-        LOGI(TAG, "LittleFS mounted!");
-        _fsMounted = true;
+        File file = LittleFS.open("/images.json", "r");
+        if (!file || file.isDirectory()) { 
+            LOGE(TAG, "An Error has occurred while reading images.json!"); 
+        } else {
+            std::string fileContent;
+            _imagesJson = new JsonDocument();
+            while (file.available()) {
+                char intRead = file.read();
+                fileContent += intRead;
+            }            
+            file.close();
+            deserializeJson(*_imagesJson, fileContent);
+            _imagesJson->shrinkToFit();
+            if (!_imagesJson->as<JsonObject>()["images"].is<JsonArray>()) {
+                LOGE(TAG, "An Error has occurred while parsing images.json for images!");
+            } else {
+                _imageCount = 
+                LOGI(TAG, "images.json seems fine! (%d images)", _imagesJson->as<JsonObject>()["images"].as<JsonArray>().size());
+                _fsMounted = true;
+                LOGD(TAG, "Mounted littleFS successfully.");
+            }
+        }
     }
+
+    // Prepare handler for showing images
+    _showImageHandler = new AsyncCallbackJsonWebHandler("/display/showimage");
+    _showImageHandler->setMethod(HTTP_PUT);
+    _showImageHandler->setFilter([&](__unused AsyncWebServerRequest* request) { return (EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED &&  _fsMounted); });
+    _showImageHandler->onRequest([&] (AsyncWebServerRequest* request, JsonVariant& json ) {
+        LOGD(TAG, "Serve /display/showimage");
+        auto img_idx = json.as<JsonObject>()["img_idx"].as<int32_t>();
+        auto img_idx_max = _imagesJson->as<JsonObject>()["images"].as<JsonArray>().size();
+        LOGD(TAG, "Got img_idx: %d", img_idx);
+        if (Display.isBusy() || !Display.isInitialized()) {
+            LOGW(TAG, "Not available right now");
+            request->send(503, "text/plain", "Display not available right now");
+        } else if (img_idx < 0 || img_idx > img_idx_max) {
+            LOGW(TAG, "img_idx out of bounds");
+            request->send(418, "text/plain", "img_idx out of bounds");
+        } else {
+            // TODO: do it right
+            switch (img_idx) {
+                case 0: 
+                    LOGI(TAG, "I want to wipe!");                  
+                    Display.wipeDisplay();
+                    _imageIdx = img_idx;                  
+                    break;
+                case 1: 
+                    LOGI(TAG, "I want to print in black!");                  
+                    Display.printCenteredTag(NAME_TAG_BLACK);
+                    _imageIdx = img_idx;                  
+                    break;
+                case 2: 
+                    LOGI(TAG, "I want to print in red!");                 
+                    Display.printCenteredTag(NAME_TAG_RED);
+                    _imageIdx = img_idx;                  
+                    break;
+                default:
+                    _imageIdx = img_idx;
+            }
+            
+            request->send(200, "text/plain", "OK");           
+        }        
+    }); 
+
+    // Register handler for showing images
+    webServer.addHandler(_showImageHandler);
 
     // serve from File System
     webServer.serveStatic("/images/", LittleFS, "/").setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
 
     // serve from File System
     webServer.serveStatic("/images.json", LittleFS, "/images.json", "no-store").setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
-
+    
     // serve request for display state
-    webServer.on("/display/state", HTTP_GET, [](AsyncWebServerRequest* request) {
+    webServer.on("/display/state", HTTP_GET, [&](AsyncWebServerRequest* request) {
         LOGD(TAG, "Serve /display/state");
-        request->send(200, "application/json", "{\"state\":\"not_initialized\", \"img_idx\":-1}");
+        AsyncResponseStream* response = request->beginResponseStream("application/json");
+        JsonDocument doc;
+        JsonObject root = doc.to<JsonObject>();
+        if (Display.isBusy()) {
+            root["state"] = "in_progress";
+        } else if (!Display.isInitialized()) {
+            root["state"] = "not_initialized";
+        } else {
+            root["state"] = "idle";
+        }
+        
+        root["img_idx"] = _imageIdx;
+        serializeJson(root, *response);
+        request->send(response);
     }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; }); 
 
     // serve the logo (for main page)

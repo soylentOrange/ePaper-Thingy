@@ -291,6 +291,8 @@
       </div>
     </div>
     <script>
+      // const info_text_board_value = ... will be injected by customize_thingy_html.py
+      // const info_text_build_value = ... will be injected by customize_thingy_html.py
       const epaper_image_area = document.getElementById("epaper_image_area")
       const info_area = document.getElementById("info_area")
       const result_container = document.getElementById("result_container")
@@ -326,72 +328,70 @@
           {
             name: "Wiped clean!",
             src: "data:image/svg+xml;base64," + btoa(blank_svg),
+            img_idx: 0,
           },
         ],
       }      
       var epaper_images_idx = -1
 
       showMain()
-      setInitialEPaperContent()      
+      prepareGetEPaperContent()
+      getEPaperContent()      
 
       epaper_image_area.addEventListener("click", async () => {   
         console.log("epaper_image_area onclick")  
-        console.log("epaper_content_state: " + epaper_content_state)     
+        console.log("epaper_content_state: " + epaper_content_state) 
+        
+        if (epaper_images.images.length == 1) return
 
-        switch (epaper_content_state) {
-          case epaper_content_state_enum.idle:
+        if (epaper_content_state == epaper_content_state_enum.idle) {
             if (epaper_images.images.length > ++epaper_images_idx) {
-              await showEPaperContent(
+              await putEPaperContent(
                 epaper_images.images[epaper_images_idx].name,
                 epaper_images.images[epaper_images_idx].src,
+                epaper_images.images[epaper_images_idx].img_idx,
               )
             } else {
               epaper_images_idx = 0
-              await showEPaperContent(
+              await putEPaperContent(
                 epaper_images.images[epaper_images_idx].name,
                 epaper_images.images[epaper_images_idx].src,
+                epaper_images.images[epaper_images_idx].img_idx,
               )
             }
-            break
-          case epaper_content_state_enum.not_initialized:
-            // initialize display...
-
-            // show blank image
-            epaper_images_idx = 0
-            await showEPaperContent(
-              epaper_images.images[epaper_images_idx].name,
-              epaper_images.images[epaper_images_idx].src,
-            )
-            help_text.innerHTML =
-              "Click the image area to show next image on ePaperThingy's display."
-            break
-          default:
         }
       })
 
+      // show board name and build DateTime
       info_text_board.innerHTML = info_text_board_value
       info_text_build.innerHTML = info_text_build_value
 
+      // show main view (default)
       button_main.addEventListener("click", () => {
         showMain()
       })
 
+      // show the second page
       button_settings.addEventListener("click", () => {
         showSettings()
       })
 
+      // restart thingy by HTTP_GET'ting /restart
       restart_button.addEventListener("click", () => {
         doSomethingWithThingy("/restart")
       })
 
+      // restart thingy into SafeBott-mode by HTTP_GET'ting /safeboot
       safeboot_button.addEventListener("click", () => {
         doSomethingWithThingy("/safeboot")
       })
 
+      // clear Wifi-credentials (stored by ESPConnect) and restart
       clear_wifi_button.addEventListener("click", () => {
         doSomethingWithThingy("/clearwifi")
       })      
 
+      // fetch the images.json (stored in littleFS)
       async function getImageList() {
         try {
           const response = await fetch("/images.json")
@@ -409,6 +409,7 @@
         }
       }
 
+      // fetch the display state (thingy will return a json)
       async function getDisplayState() {
         console.log("getDisplayState")
         try {
@@ -426,44 +427,67 @@
         }
       }
 
-      async function setInitialEPaperContent() {
+      // prepare the main view before getting the initial state of the display
+      // also, fetch the json listing all of the available images in littleFS
+      async function prepareGetEPaperContent() {
         epaper_content_info.innerHTML = "Processing..."
         epaper_content.style.display = "none"
         epaper_loader.style.display = "block"
         epaper_loader.style.cursor = "wait"
         epaper_content.style.cursor = "wait"
-
-        let {state, img_idx} = await getDisplayState()
+        help_text.innerHTML = "Be patient: ePaperThingy is working..."
+        
         await getImageList()
+      }
+
+      // get some info on what is shown right now on the display
+      // when something is shown on the display, reflect it on the main view as well
+      // will do pseudo-recursion by calling it itself again (after 1 s) when thingy is reporting in_progress 
+      async function getEPaperContent() {
+        let {state, img_idx} = await getDisplayState()
 
         epaper_content_state = state
         epaper_images_idx = img_idx
         if (epaper_content_state == epaper_content_state_enum.not_initialized) {
           epaper_content.src = "data:image/svg+xml;base64," + btoa(no_service_svg)
-          epaper_content_info.innerHTML = "Not initialized!"
+          epaper_content_info.innerHTML = "No response!"
           epaper_content.style.display = "block"
           epaper_loader.style.display = "none"
-          epaper_content.style.cursor = "pointer"
+          epaper_content.style.cursor = "not-allowed"
           help_text.innerHTML =
-              "Click on the image area to initialize ePaperThingy's display."
-        } else {          
-          setEPaperContent(
+              "Something went wrong: display is not responding!"
+        } else if (epaper_content_state == epaper_content_state_enum.in_progress) {
+          window.setTimeout(async () => {
+            getEPaperContent()
+          }, 1000)
+        } else {     
+          if (epaper_images.images.length <= 1) {
+            help_text.innerHTML =
+              "Nothing more to show than a blank image..."
+          } else {
+            help_text.innerHTML =
+              "Click the image area to show next image on ePaperThingy's display." 
+          }  
+          reflectEPaperContent(
             epaper_images.images[epaper_images_idx].name,
             epaper_images.images[epaper_images_idx].src,
           )
         }         
       }
 
-      function setEPaperContent(name, src) {
+      // reflect the current image on the display in the main-view
+      function reflectEPaperContent(name, src) {
         epaper_content_state = epaper_content_state_enum.idle
         epaper_content.src = src
         epaper_content_info.innerHTML = name
         epaper_content.style.display = "block"
         epaper_loader.style.display = "none"
-        epaper_content.style.cursor = "pointer"
+        epaper_content.style.cursor = 
+          epaper_images.images.length <= 1 ? "not-allowed" : "pointer"
       }
 
-      async function showEPaperContent(name, src) {
+      // set a new image (or text, or just wiped clean) to be shown on the display 
+      async function putEPaperContent(name, src, img_idx) {
         epaper_content_state = epaper_content_state_enum.in_progress
         epaper_content_info.innerHTML = "Processing..."
         epaper_content.style.display = "none"
@@ -471,18 +495,38 @@
         epaper_content.style.cursor = "wait"
 
         // do fetch
+        console.log("putEPaperContent")
+        try {
+          const imageRequest = new Request("/display/showimage", {
+            method: "PUT",
+            body: JSON.stringify({ img_idx: img_idx }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
 
-        // after successful fetch
-        // setEPaperContent(name, src)
-        // epaper_content_state = epaper_content_state_enum.idle
-        // epaper_content.src = src
-        // epaper_content_info.innerHTML = name
-        // epaper_content.style.display = "block"
-        // epaper_loader.style.display = "none"
-        // epaper_content.style.cursor = "pointer"
+          const response = await fetch(imageRequest)
+          if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`)
+          }
 
+          // check and reflect the new content
+          getEPaperContent()
+        } catch (error) {
+          console.error(error.message)
+          epaper_content_state = epaper_content_state_enum.not_initialized
+          epaper_content.src = "data:image/svg+xml;base64," + btoa(no_service_svg)
+          epaper_content_info.innerHTML = "No response!"
+          epaper_content.style.display = "block"
+          epaper_loader.style.display = "none"
+          epaper_content.style.cursor = "not-allowed"
+          help_text.innerHTML =
+              "Something went wrong: display is not responding!"
+        } 
       }
 
+      // catch-all function to do restarting 
+      // depending on the url passed, it will restart, restart into SafeBoot-mode, or clear the WiFi-credentials
       async function doSomethingWithThingy(url) {
         showResultContainer()
         result_text.innerHTML = "Processing..."
@@ -506,12 +550,16 @@
         }
       }
 
+      // refresh after delay
+      // will actually load either this website, the SafeBoot-website, or ESPConnect-portal...
+      // ...depending on the type of restart that was performed before
       function refreshHome(timeout) {
         window.setTimeout(function () {
           window.open("/", "_self")
         }, timeout)
       }
 
+      // show the main-view and hide everything else
       function showMain() {
         button_main.style.display = "none"
         button_settings.style.display = "block"        
@@ -527,15 +575,25 @@
             epaper_content.style.display = "block"
             epaper_loader.style.display = "none"
         }
+
         switch (epaper_content_state) {
-            case epaper_content_state_enum.not_initialized: 
-            help_text.innerHTML = "Click on the image area to initialize ePaperThingy's display."
+          case epaper_content_state_enum.not_initialized: 
+            help_text.innerHTML = "Something went wrong: display is not initialized!"
             break
-          default:            
-            help_text.innerHTML = "Click the image area to show next image on ePaperThingy's display."
+          default:  
+            if (epaper_images.images.length <= 1) {
+              help_text.innerHTML =
+                "Nothing more to show than a blank image..."
+              epaper_content.style.cursor = "not-allowed"
+            } else {
+              help_text.innerHTML =
+                "Click the image area to show next image on ePaperThingy's display." 
+              epaper_content.style.cursor = "pointer"
+            } 
         }
       }
 
+      // show the settings-view
       function showSettings() {
         button_main.style.display = "block"
         button_settings.style.display = "none"
@@ -545,6 +603,8 @@
         epaper_image_area.style.display = "none"
       }
 
+      // hide everything except for a view of the current progress...
+      // ...and finally the result of some operation (i.e. the different restarts)
       function showResultContainer() {
         info_area.style.display = "none"
         result_container.style.display = "block"

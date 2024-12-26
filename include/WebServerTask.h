@@ -9,14 +9,15 @@
 class WebServerClass {
 public:
     WebServerClass();
-    void begin();
+    void begin(Scheduler* scheduler);
     void end();
-    bool isRunning();
+    StatusRequest* getStatusRequest();
 
 private:
     Task _webServer;
     void _webServerCallback();
-    bool _isRunning;
+    StatusRequest _sr;
+    Scheduler* _pScheduler;
 };
 
 extern WebServerClass WebServer;
