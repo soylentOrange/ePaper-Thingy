@@ -11,7 +11,7 @@ Actually, I would love to implement this using [ESPHome](https://esphome.io/) to
 ## How is it made?
 
 This project is implemented using [PlatformIO](https://platformio.org/) with the arduino-3 platform from the (p)eople (i)nitiated (o)ptimized (arduino) ([pioarduino](https://github.com/pioarduino/platform-espressif32/)). For my convenience, OTA-programming is enabled by including the [ArduinoOTA](https://github.com/espressif/arduino-esp32)-library from Espressif Systems' Arduino ESP32 project.
-Firmware updates and ArduinoOTA is enabled with a small safeboot partition (640KB). The main app can span over ~3MB. To trigger a restart into this partion, just call http://epaperthingy.local/safeboot or hit the SafeBoot-button in the Settings-page. After a few seconds the OTA-Website shows up:
+Firmware updates and ArduinoOTA is enabled with a small safeboot partition (640KB). The main app can span over ~3MB. To trigger a restart into this partion, just call `http://epaperthingy.local/safeboot` or hit the SafeBoot-button in the Settings-page. After a few seconds the OTA-Website shows up:
 
 ![SafeBoot screenshot](doc/assets/SafeBoot_thingy.png)
 
@@ -21,7 +21,7 @@ When using Over-the-Air (OTA) updating from PlatformIO, the safeboot-mode will b
 * The webserver is powered by [ESPAsyncWebServer](https://github.com/mathieucarbou/ESPAsyncWebServer) - GNU Lesser General Public License v3.0
 * The network manager is [MycilaESPConnect](https://github.com/mathieucarbou/MycilaESPConnect) - GNU General Public License v3.0
 * The task manager is [TaskScheduler](https://github.com/arkhipenko/TaskScheduler) - BSD 3-Clause "New" or "Revised" License
-* __await__ The library to control the E-Ink display is [GxEPD2](https://github.com/ZinggJM/GxEPD2) - GNU General Public License v3.0
+* The library to control the E-Ink display is [GxEPD2](https://github.com/ZinggJM/GxEPD2) - GNU General Public License v3.0
 * The safeboot-partition contains ArduinoOTA and OTA-Update - the scripts factory.py and safeboot.py from [MycilaSafeBoot](https://github.com/mathieucarbou/MycilaSafeBoot) fall under MIT license. [ArduinoOTA](https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA) and [Update](https://github.com/espressif/arduino-esp32/tree/master/libraries/Update) are from [Espressif Systems' Arduino ESP32 core library](https://github.com/espressif/arduino-esp32/tree/master/libraries). Both are Apache-2.0
 * The icons from the [Mono Interface Icons Collection](https://www.svgrepo.com/collection/mono-interface-icons/) are public domain
 
