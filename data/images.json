@@ -1,10 +1,7 @@
 {
     "images": 
     [ 
-        {"name": "Show test image", "src": "/images/img_test.svg"},
-        {"name": "Show infamous logo", "src": "/images/img_logo.svg"},
-        {"name": "Show image: door is open", "src": "/images/img_door_open.svg"}, 
-        {"name": "Show image: lock is unlocked", "src": "/images/img_unlocked.svg"},
-        {"name": "Show image: lock is locked", "src": "/images/img_locked.svg"} 
+        {"name": "Show black text", "src": "/images/epaperthingy_black.svg", "img_idx": 1},
+        {"name": "Show red text", "src": "/images/epaperthingy_red.svg", "img_idx": 2}
     ]
 }
