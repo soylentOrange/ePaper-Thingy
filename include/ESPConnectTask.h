@@ -9,12 +9,13 @@
 class ESPConnectClass {
 public:
     ESPConnectClass();
-    void begin();
+    void begin(Scheduler* scheduler);
     void end();
 
 private:
     Task _espConnect;
     void _espConnectCallback();
+    Scheduler* _pScheduler;
 };
 
 extern ESPConnectClass ESPConnect;

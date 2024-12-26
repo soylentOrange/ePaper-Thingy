@@ -10,7 +10,7 @@
 class EventHandlerClass {
 public:
     EventHandlerClass();
-    void begin();
+    void begin(Scheduler* scheduler);
     void end();
     Mycila::ESPConnect::State getState();
 
@@ -19,6 +19,7 @@ private:
     void _eventHandlerCallback();
     Mycila::ESPConnect::State _previous;
     Mycila::ESPConnect::State _state;
+    Scheduler* _pScheduler;
 };
 
 extern EventHandlerClass EventHandler;

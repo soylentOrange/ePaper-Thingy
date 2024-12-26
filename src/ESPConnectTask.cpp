@@ -6,14 +6,14 @@
 #define TAG "ESPConnect"
 
 ESPConnectClass::ESPConnectClass()
-    : _espConnect(TASK_IMMEDIATE, TASK_FOREVER, std::bind(&ESPConnectClass::_espConnectCallback, this), 
-        NULL, false, NULL) {
+    : _espConnect(TASK_IMMEDIATE, TASK_FOREVER, [&] { _espConnectCallback(); }, 
+        NULL, false, NULL, NULL, false)
+    , _pScheduler(nullptr) {
 }
 
-void ESPConnectClass::begin() {
+void ESPConnectClass::begin(Scheduler* scheduler) {
     // stop possibly running espConnect first
-    espConnect.end();
-    yield();  
+    espConnect.end(); 
 
     // get some info from espconnect's preferences
     Preferences preferences;
@@ -36,14 +36,17 @@ void ESPConnectClass::begin() {
     espConnect.setCaptivePortalTimeout(ESPCONNECT_TIMEOUT_CAPTIVE_PORTAL);
     espConnect.setConnectTimeout(ESPCONNECT_TIMEOUT_CONNECT);    
     espConnect.begin(APP_NAME, CAPTIVE_PORTAL_SSID, CAPTIVE_PORTAL_PASSWORD);
-    scheduler.addTask(_espConnect);
+
+    // Task handling
+    _pScheduler = scheduler;
+    _pScheduler->addTask(_espConnect);
     _espConnect.enable();
 }
 
 void ESPConnectClass::end() {
     LOGD(TAG, "Stopping ESPConnect-Task...");
     _espConnect.disable();
-    scheduler.deleteTask(_espConnect);
+    _pScheduler->deleteTask(_espConnect);
     espConnect.end();
 } 
 
