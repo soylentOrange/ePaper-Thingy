@@ -27,8 +27,9 @@ When using Over-the-Air (OTA) updating from PlatformIO, the safeboot-mode will b
 
 ## How does it work?
 
-After connecting a display to your board, compile the project, flash it to your board. Connect to the new Access-Point (ePaperPortal) and connect the board to your trusted WiFi. Afterward you can just open http://epaperthingy.local to see the (minimalistic, at most...) Website.
+After connecting a display to your board, compile the project, flash it to your board. Connect to the new Access-Point (ePaperPortal) and connect the board to your trusted WiFi. Afterward you can just open `http://epaperthingy.local` to see the (minimalistic, at most...) Website.
 Test pictures are shown on the display when clicking the image area.
+The [GxEPD2](https://github.com/ZinggJM/GxEPD2)-library is quite easy to use, yet it is blocking. As the display takes ages (~ 15 seconds) to show something new, I sprinkled in some preemptive tasks ([FreeRTOS](https://www.freertos.org/)) that are hidden in cooperative tasks ([TaskScheduler](https://github.com/arkhipenko/TaskScheduler)) and thus use the same simple interface for signaling the status.
 
 ### How to flash the firmware?
 
@@ -51,6 +52,6 @@ Some points that I would have liked to know earlier:
 * See the `WebServerTask.cpp` on how to serve the logo for ESPConnect.
 * The favicon-images are taken from the data-folder, compressed and linked into the firmware image. When you want to find out how to use them, have a look in the `firmware.map` (in `.pio/build/[your-env]`).
 * This project is using [TaskScheduler](https://github.com/arkhipenko/TaskScheduler) for cooperative multitasking. The `main.cpp` seems rather empty, everything that's interesting is happening in the individual tasks.
-* Creating svgs with Inkscape creates lots of clutter in the file, [SVGminify.com](https://www.svgminify.com/) helps
+* Creating svgs with Inkscape leaves a lot of clutter in the file, [SVGminify.com](https://www.svgminify.com/) helps
 * [jsfiddle](https://jsfiddle.net/) in extremely helpful in testing the websites. See one of the test fiddles [here](https://jsfiddle.net/9wr62y3u/28/)
 * You can burn your time easily when trying to come up with solutions for marginal problems...

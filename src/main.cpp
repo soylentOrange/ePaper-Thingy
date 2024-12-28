@@ -18,6 +18,9 @@ Soylent::DisplayClass Display(displaySpi);
 Soylent::WebServerClass WebServer(webServer);
 Soylent::WebSiteClass WebSite(webServer);
 
+// Spinlock for critical sections
+portMUX_TYPE cs_spinlock = portMUX_INITIALIZER_UNLOCKED;
+
 void setup() {
 
     // Start Serial or USB-CDC

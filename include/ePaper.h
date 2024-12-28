@@ -26,6 +26,9 @@ extern Soylent::DisplayClass Display;
 extern Soylent::WebServerClass WebServer;
 extern Soylent::WebSiteClass WebSite;
 
+// Spinlock for critical sections
+extern portMUX_TYPE cs_spinlock;
+
 // Shorthands for Logging
 #ifdef EPAPER_DEBUG
     #ifdef MYCILA_LOGGER_SUPPORT
