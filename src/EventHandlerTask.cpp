@@ -5,93 +5,83 @@
 #include <ePaper.h>
 #define TAG "EventHandler"
 
-EventHandlerClass::EventHandlerClass()
-    : _eventHandler(TASK_SECOND, TASK_FOREVER, [&] { _eventHandlerCallback(); }, 
-        NULL, false, NULL, NULL, false)
-    , _previous(Mycila::ESPConnect::State::NETWORK_DISABLED)
-    , _state(Mycila::ESPConnect::State::NETWORK_DISABLED)
-    , _pScheduler(nullptr) {
+Soylent::EventHandlerClass::EventHandlerClass(AsyncWebServer& webServer, Mycila::ESPConnect& espConnect)
+    : _state(Mycila::ESPConnect::State::NETWORK_DISABLED)
+    , _scheduler(nullptr)
+    , _webServer(&webServer)
+    , _espConnect(&espConnect) {
 }
 
-void EventHandlerClass::begin(Scheduler* scheduler) {
-    LOGD(TAG, "Enabling EventHandler-Task...");
-    _state = espConnect.getState();
-    _previous = _state;
+void Soylent::EventHandlerClass::begin(Scheduler* scheduler) {
+    _state = _espConnect->getState();
 
     // Task handling
-    _pScheduler = scheduler;
-    _pScheduler->addTask(_eventHandler);
-    _eventHandler.enable();
-    LOGD(TAG, "EventHandler started!");
+    _scheduler = scheduler;
+
+    // Register Callback to espConnect
+    _espConnect->listen([&](__unused Mycila::ESPConnect::State previous, 
+        Mycila::ESPConnect::State state) { _stateCallback(state); });
 }
 
-void EventHandlerClass::end() {
-    LOGD(TAG, "Disabling EventHandler-Task...");
+void Soylent::EventHandlerClass::end() {
+    LOGD(TAG, "Disabling EventHandler...");
+    _espConnect->listen([](__unused Mycila::ESPConnect::State previous,
+        __unused Mycila::ESPConnect::State state) { std::function<void(void)> {}; });
     _state = Mycila::ESPConnect::State::NETWORK_DISABLED;
-    _previous = _state;
-    _eventHandler.disable();
-    _pScheduler->deleteTask(_eventHandler);
-    LOGD(TAG, "EventHandler-Task disabled!");
 }
 
-Mycila::ESPConnect::State EventHandlerClass::getState() {
+Mycila::ESPConnect::State Soylent::EventHandlerClass::getState() {
     return _state;
 }
 
 // Handle events from ESPConnect
-void EventHandlerClass::_eventHandlerCallback() {
+void Soylent::EventHandlerClass::_stateCallback(Mycila::ESPConnect::State state) {
+    _state = state;
 
-    // Do something on state change of espConnect
-    _previous = _state;
-    _state = espConnect.getState();
-    if (_previous != _state) {
-        switch (_state) {
-            case Mycila::ESPConnect::State::NETWORK_CONNECTED:
-                LOGI(TAG, "--> Connected to network...");
-                yield();
-                LOGI(TAG, "IPAddress: %s", espConnect.getIPAddress().toString().c_str());
-                WebServer.begin(_pScheduler);
-                yield();
-                WebSite.begin(_pScheduler);
-                break;
+    switch (state) {
+        case Mycila::ESPConnect::State::NETWORK_CONNECTED:
+            LOGI(TAG, "--> Connected to network...");
+            yield();
+            LOGI(TAG, "IPAddress: %s", _espConnect->getIPAddress().toString().c_str());
+            WebServer.begin(_scheduler);
+            yield();
+            WebSite.begin(_scheduler);
+            break;
 
-            case Mycila::ESPConnect::State::AP_STARTED:
-                LOGI(TAG, "--> Created AP...");
-                yield();
-                LOGI(TAG, "SSID: %s", espConnect.getAccessPointSSID().c_str());
-                LOGI(TAG, "IPAddress: %s", espConnect.getIPAddress().toString().c_str());
-                WebServer.begin(_pScheduler);
-                yield();
-                WebSite.begin(_pScheduler);
-                break;
+        case Mycila::ESPConnect::State::AP_STARTED:
+            LOGI(TAG, "--> Created AP...");
+            yield();
+            LOGI(TAG, "SSID: %s", _espConnect->getAccessPointSSID().c_str());
+            LOGI(TAG, "IPAddress: %s", _espConnect->getIPAddress().toString().c_str());
+            WebServer.begin(_scheduler);
+            yield();
+            WebSite.begin(_scheduler);
+            break;
 
-            case Mycila::ESPConnect::State::PORTAL_STARTED:
-                LOGI(TAG, "--> Started Captive Portal...");
-                yield();
-                LOGI(TAG, "SSID: %s", espConnect.getAccessPointSSID().c_str());
-                LOGI(TAG, "IPAddress: %s", espConnect.getIPAddress().toString().c_str());
-                WebServer.begin(_pScheduler);
-                break;
+        case Mycila::ESPConnect::State::PORTAL_STARTED:
+            LOGI(TAG, "--> Started Captive Portal...");
+            yield();
+            LOGI(TAG, "SSID: %s", _espConnect->getAccessPointSSID().c_str());
+            LOGI(TAG, "IPAddress: %s", _espConnect->getIPAddress().toString().c_str());
+            WebServer.begin(_scheduler);
+            break;
 
-            case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
-                LOGI(TAG, "--> Disconnected from network...");
-                WebSite.end();
-                WebServer.end();
-                break;
+        case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
+            LOGI(TAG, "--> Disconnected from network...");
+            WebSite.end();
+            WebServer.end();
+            break;
 
-            case Mycila::ESPConnect::State::PORTAL_COMPLETE: {
-                LOGI(TAG, "--> Captive Portal has ended, auto-save the configuration...");
-                auto config = espConnect.getConfig();
-                LOGD(TAG, "ap: %d", config.apMode);
-                LOGD(TAG, "wifiSSID: %s", config.wifiSSID.c_str());
-                LOGD(TAG, "wifiPassword: %s", config.wifiPassword.c_str());
-                break;
-            }
+        case Mycila::ESPConnect::State::PORTAL_COMPLETE: {
+            LOGI(TAG, "--> Captive Portal has ended, auto-save the configuration...");
+            auto config = _espConnect->getConfig();
+            LOGD(TAG, "ap: %d", config.apMode);
+            LOGD(TAG, "wifiSSID: %s", config.wifiSSID.c_str());
+            LOGD(TAG, "wifiPassword: %s", config.wifiPassword.c_str());
+            break;
+        }
 
-            default:
-                break;
-        } /* switch (_state) */
-    } /* if (_previous != _state) */
-} 
-
-EventHandlerClass EventHandler;
+        default:
+            break;
+    } /* switch (_state) */
+}

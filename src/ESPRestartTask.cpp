@@ -6,33 +6,34 @@
 #include <Esp.h>
 #define TAG "ESPRestart"
 
-ESPRestartClass::ESPRestartClass()
-    : _cleanupBeforeRestart(TASK_IMMEDIATE, TASK_ONCE, [&] { _cleanupCallback(); }, 
-        NULL, false, NULL, NULL, false)
-    , _restart(TASK_IMMEDIATE, TASK_ONCE, [&] { _restartCallback(); }, 
-        NULL, false, NULL, NULL, false)
+Soylent::ESPRestartClass::ESPRestartClass()
+    : _cleanupBeforeRestartTask(nullptr)
+    , _restartTask(nullptr)
     , _delayBeforeRestart(0)
-    , _pScheduler(nullptr) {
+    , _scheduler(nullptr) {
 }
 
-void ESPRestartClass::begin(Scheduler* scheduler) {
-    // Task handling
-    _pScheduler = scheduler;
-    _pScheduler->addTask(_restart);
-    _pScheduler->addTask(_cleanupBeforeRestart);
+void Soylent::ESPRestartClass::begin(Scheduler* scheduler) {
+
+    // Create Tasks and add them to the scheduler
+    _scheduler = scheduler;
+    _cleanupBeforeRestartTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] { _cleanupCallback(); }, 
+        _scheduler, false, NULL, NULL, true); 
+    _restartTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] { _restartCallback(); }, 
+        _scheduler, false, NULL, NULL, true);
 }
 
-void ESPRestartClass::restart() {
+void Soylent::ESPRestartClass::restart() {
     _delayBeforeRestart = 0;
-    _cleanupBeforeRestart.enable();
+    _cleanupBeforeRestartTask->enable();
 }
 
-void ESPRestartClass::restartDelayed(unsigned long delayBeforeCleanup = 500, unsigned long delayBeforeRestart = 500) {
+void Soylent::ESPRestartClass::restartDelayed(unsigned long delayBeforeCleanup = 500, unsigned long delayBeforeRestart = 500) {
     _delayBeforeRestart = delayBeforeRestart;
-    _cleanupBeforeRestart.enableDelayed(delayBeforeCleanup);
+    _cleanupBeforeRestartTask->enableDelayed(delayBeforeCleanup);
 }
 
-void ESPRestartClass::_cleanupCallback() {
+void Soylent::ESPRestartClass::_cleanupCallback() {
     // Do some cleanup...
     WebSite.end();
     WebServer.end();
@@ -40,12 +41,10 @@ void ESPRestartClass::_cleanupCallback() {
     Display.end();
 
     // ...and finally, the Restart-Task can be enabled subsequently
-    _restart.enableDelayed(_delayBeforeRestart);
+    _restartTask->enableDelayed(_delayBeforeRestart);
 } 
 
 // Just iniate the restart
-void ESPRestartClass::_restartCallback() {
+void Soylent::ESPRestartClass::_restartCallback() {
     esp_restart();
-} 
-
-ESPRestartClass ESPRestart;
+}

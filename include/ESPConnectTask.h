@@ -6,16 +6,18 @@
 
 #include <TaskSchedulerDeclarations.h>
 
-class ESPConnectClass {
-public:
-    ESPConnectClass();
-    void begin(Scheduler* scheduler);
-    void end();
+namespace Soylent {
+    class ESPConnectClass {
+    public:
+        ESPConnectClass(Mycila::ESPConnect& espConnect);
+        void begin(Scheduler* scheduler);
+        void end();
+        void clearConfiguration();
 
-private:
-    Task _espConnect;
-    void _espConnectCallback();
-    Scheduler* _pScheduler;
-};
-
-extern ESPConnectClass ESPConnect;
+    private:
+        Task* _espConnectTask;
+        void _espConnectCallback();
+        Scheduler* _scheduler;
+        Mycila::ESPConnect* _espConnect;
+    };
+} // namespace Soylent

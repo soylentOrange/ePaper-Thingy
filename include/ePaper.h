@@ -19,9 +19,12 @@
 #include <DisplayTask.h>
 
 // in main.cpp
-extern AsyncWebServer webServer;    
-extern Scheduler scheduler;
-extern Mycila::ESPConnect espConnect;
+extern Soylent::ESPRestartClass ESPRestart;
+extern Soylent::ESPConnectClass ESPConnect;
+extern Soylent::EventHandlerClass EventHandler;
+extern Soylent::DisplayClass Display;
+extern Soylent::WebServerClass WebServer;
+extern Soylent::WebSiteClass WebSite;
 
 // Shorthands for Logging
 #ifdef EPAPER_DEBUG

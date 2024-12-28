@@ -6,10 +6,17 @@
 #include <TaskScheduler.h>
 #include <SystemInfo.h>
 
-// Create the WebServer, ESPConnect and Task-Scheduler here
+// Create the WebServer, ESPConnect, Task-Scheduler,... here
 AsyncWebServer webServer(HTTP_PORT);
 Mycila::ESPConnect espConnect(webServer);
 Scheduler scheduler;
+Soylent::ESPRestartClass ESPRestart;
+Soylent::ESPConnectClass ESPConnect(espConnect);
+Soylent::EventHandlerClass EventHandler(webServer, espConnect);
+SPIClass displaySpi(HSPI);
+Soylent::DisplayClass Display(displaySpi);
+Soylent::WebServerClass WebServer(webServer);
+Soylent::WebSiteClass WebSite(webServer);
 
 void setup() {
 
@@ -32,18 +39,18 @@ void setup() {
     // Initialize the Scheduler
     scheduler.init();
 
-    // Add Display-Task to Scheduler
-    Display.begin(&scheduler);
-
     // Add Restart-Task to Scheduler
     ESPRestart.begin(&scheduler);
+
+    // Add ESPConnect-Task to Scheduler
+    ESPConnect.begin(&scheduler);
 
     // Add EventHandler to Scheduler
     // Will also spawn the WebServer and WebSite (when ESPConnect says so...)
     EventHandler.begin(&scheduler);
 
-    // Add ESPConnect-Task to Scheduler
-    ESPConnect.begin(&scheduler);
+    // Add Display-Task to Scheduler
+    Display.begin(&scheduler);
 }
 
 void loop() {

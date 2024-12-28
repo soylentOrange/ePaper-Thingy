@@ -7,19 +7,19 @@
 #include <TaskSchedulerDeclarations.h>
 #include <MycilaESPConnect.h>
 
-class EventHandlerClass {
-public:
-    EventHandlerClass();
-    void begin(Scheduler* scheduler);
-    void end();
-    Mycila::ESPConnect::State getState();
+namespace Soylent {
+    class EventHandlerClass {
+    public:
+        EventHandlerClass(AsyncWebServer& webServer, Mycila::ESPConnect& espConnect);
+        void begin(Scheduler* scheduler);
+        void end();
+        Mycila::ESPConnect::State getState();
 
-private:
-    Task _eventHandler;
-    void _eventHandlerCallback();
-    Mycila::ESPConnect::State _previous;
-    Mycila::ESPConnect::State _state;
-    Scheduler* _pScheduler;
-};
-
-extern EventHandlerClass EventHandler;
+    private:
+        void _stateCallback(Mycila::ESPConnect::State state);
+        Mycila::ESPConnect::State _state;
+        Scheduler* _scheduler;
+        AsyncWebServer* _webServer;
+        Mycila::ESPConnect* _espConnect;
+    };
+} // namespace Soylent
