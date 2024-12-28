@@ -6,42 +6,41 @@
 #include "Fonts/FreeSans12pt7b.h"
 #define TAG "Display"
 
-DisplayClass::DisplayClass()
-    : _initializeDisplay(TASK_IMMEDIATE, TASK_ONCE, [&] { _initializeDisplayCallback(); }, 
-        NULL, false, NULL, NULL, false)
-    , _display(GxEPD2_154_Z90c(DISPLAY_PIN_CS, DISPLAY_PIN_DC, DISPLAY_PIN_RST, DISPLAY_PIN_BUSY))
-    , _hspi(HSPI)
-    , _pScheduler(nullptr) {    
+Soylent::DisplayClass::DisplayClass(SPIClass& spi)
+    : _display(GxEPD2_154_Z90c(DISPLAY_PIN_CS, DISPLAY_PIN_DC, DISPLAY_PIN_RST, DISPLAY_PIN_BUSY))
+    , _spi(&spi)
+    , _scheduler(nullptr) {    
     _srBusy.setWaiting();
     _srInitialized.setWaiting();   
 }
 
-void DisplayClass::begin(Scheduler* scheduler) {
-    LOGD(TAG, "Enabling Display-Task(s)...");
+void Soylent::DisplayClass::begin(Scheduler* scheduler) {
     yield();
 
     _srBusy.setWaiting();
     _srInitialized.setWaiting();
-    _pScheduler = scheduler;    
-    _pScheduler->addTask(_initializeDisplay);
-    _initializeDisplay.enable();
+    _scheduler = scheduler;   
+    // create and run a task for initializing the display
+    Task* initializeDisplayTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] { _initializeDisplayCallback(); }, 
+        _scheduler, false, NULL, NULL, true);   
+    initializeDisplayTask->enable();
+
+    LOGD(TAG, "Display is scheduled for start...");
 }
 
-void DisplayClass::end() {
+void Soylent::DisplayClass::end() {
     LOGD(TAG, "Hibernate Display...");
     if (_srInitialized.completed()) {
         _display.hibernate();
     }   
     _srBusy.setWaiting();
     _srInitialized.setWaiting(); 
-    _initializeDisplay.disable();
-    _pScheduler->deleteTask(_initializeDisplay);
     LOGD(TAG, "...done!");
 }
 
 // Initialize the display
-void DisplayClass::_initializeDisplayCallback() {
-
+void Soylent::DisplayClass::_initializeDisplayCallback() {
+    LOGD(TAG, "Initialize Display...");
     #ifdef LED_BUILTIN
         pinMode(LED_BUILTIN, OUTPUT);
         digitalWrite(LED_BUILTIN, HIGH);
@@ -54,48 +53,38 @@ void DisplayClass::_initializeDisplayCallback() {
     pinMode(DISPLAY_PIN_RST, OUTPUT);
 
     // Initialize SPI and display
-    _hspi.begin(DISPLAY_PIN_SPI_SCK, DISPLAY_PIN_SPI_MISO, DISPLAY_PIN_SPI_MOSI, DISPLAY_PIN_SPI_SS);
-    _display.init(0, true, 2, false, _hspi, SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    _spi->begin(DISPLAY_PIN_SPI_SCK, DISPLAY_PIN_SPI_MISO, DISPLAY_PIN_SPI_MOSI, DISPLAY_PIN_SPI_SS);
+    _display.init(0, true, 2, false, *_spi, SPISettings(4000000, MSBFIRST, SPI_MODE0));
 
-    // a blank image (with text...)
-    _display.setRotation(1);
-    _display.setFont(&FreeSans12pt7b);
-    _display.firstPage();
-    do {
-        _display.fillScreen(GxEPD_WHITE);
-        yield();
-    } while (_display.nextPage());
-
-    _display.powerOff();
-
-    #ifdef LED_BUILTIN
-        digitalWrite(LED_BUILTIN, LOW);
-    #endif
-
-    LOGD(TAG, "Display initialized!");
     _srInitialized.signalComplete();
-    _srBusy.signalComplete();
+    LOGD(TAG, "...done!");
+
+    // create and run a task for wiping the display...
+    LOGD(TAG, "Wiping Display...");
+    Task* wipeDisplayTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] { _wipeDisplayCallback(); }, 
+        _scheduler, false, NULL, NULL, true);   
+    wipeDisplayTask->enable();
 } 
 
-bool DisplayClass::isInitialized() {
+bool Soylent::DisplayClass::isInitialized() {
     return _srInitialized.completed();
 } 
 
-bool DisplayClass::isBusy() {
+bool Soylent::DisplayClass::isBusy() {
     return _srBusy.pending();
 } 
 
-void DisplayClass::powerOff() {
+void Soylent::DisplayClass::powerOff() {
     if (_srInitialized.pending()) return;
     _display.powerOff();
 } 
 
-void DisplayClass::hibernate() {
+void Soylent::DisplayClass::hibernate() {
     if (_srInitialized.pending()) return;
     _display.hibernate();
 }
 
-void DisplayClass::_wipeDisplayCallback() {
+void Soylent::DisplayClass::_wipeDisplayCallback() {
     // Flag display as busy
     _srBusy.setWaiting();
 
@@ -115,22 +104,22 @@ void DisplayClass::_wipeDisplayCallback() {
     _srBusy.signalComplete();
 }
 
-void DisplayClass::wipeDisplay() {
+void Soylent::DisplayClass::wipeDisplay() {
 
     if (_srInitialized.pending()) {
         LOGW(TAG, "uninitialized, can't wipe!");
         return;
     }
 
+    // create and run a task for wiping the display...
     LOGD(TAG, "Start wiping...");
-    // create and run a task for wiping display...
     Task* wipeDisplayTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] { _wipeDisplayCallback(); }, 
-        _pScheduler, false, NULL, NULL, true);   
+        _scheduler, false, NULL, NULL, true);   
     wipeDisplayTask->enable();
     wipeDisplayTask->waitFor(&_srBusy);
 }
 
-void DisplayClass::_printCenteredTextCallback(std::string content, uint16_t c) {
+void Soylent::DisplayClass::_printCenteredTextCallback(std::string content, uint16_t c) {
     // Flag display as busy
     _srBusy.setWaiting();
 
@@ -167,7 +156,7 @@ void DisplayClass::_printCenteredTextCallback(std::string content, uint16_t c) {
     _srBusy.signalComplete();
 }
 
-void DisplayClass::printCenteredTag(uint16_t tagID = NAME_TAG_BLACK) {
+void Soylent::DisplayClass::printCenteredTag(uint16_t tagID = NAME_TAG_BLACK) {
 
     if (_srInitialized.pending()) {
         LOGW(TAG, "uninitialized, can't print!");
@@ -188,12 +177,10 @@ void DisplayClass::printCenteredTag(uint16_t tagID = NAME_TAG_BLACK) {
             break;
     }
 
-    LOGD(TAG, "Start printing: %s", content.c_str());
     // create and run a task for wiping display...
+    LOGD(TAG, "Start printing: %s", content.c_str());
     Task* printTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&, content, c] { _printCenteredTextCallback(content, c); }, 
-        _pScheduler, false, NULL, NULL, true);   
+        _scheduler, false, NULL, NULL, true);   
     printTask->enable();
     printTask->waitFor(&_srBusy);
 }
-
-DisplayClass Display;

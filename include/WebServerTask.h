@@ -6,18 +6,18 @@
 
 #include <TaskSchedulerDeclarations.h>
 
-class WebServerClass {
-public:
-    WebServerClass();
-    void begin(Scheduler* scheduler);
-    void end();
-    StatusRequest* getStatusRequest();
+namespace Soylent {
+    class WebServerClass {
+    public:
+        WebServerClass(AsyncWebServer& webServer);
+        void begin(Scheduler* scheduler);
+        void end();
+        StatusRequest* getStatusRequest();
 
-private:
-    Task _webServer;
-    void _webServerCallback();
-    StatusRequest _sr;
-    Scheduler* _pScheduler;
-};
-
-extern WebServerClass WebServer;
+    private:
+        void _webServerCallback();
+        StatusRequest _sr;
+        Scheduler* _scheduler;
+        AsyncWebServer* _webServer;
+    };
+} // namespace Soylent

@@ -19,27 +19,28 @@ extern const uint8_t favicon_32_png_end[] asm("_binary__pio_assets_favicon_32x32
 extern const uint8_t thingy_html_start[] asm("_binary__pio_assets_thingy_html_gz_start");
 extern const uint8_t thingy_html_end[] asm("_binary__pio_assets_thingy_html_gz_end");
 
-WebSiteClass::WebSiteClass()
-    : _website(TASK_IMMEDIATE, TASK_ONCE, [&] { _websiteCallback(); }, 
-        NULL, false, NULL, NULL, false)
-    , _imageIdx(0)
+Soylent::WebSiteClass::WebSiteClass(AsyncWebServer& webServer)
+    : _imageIdx(0)
     , _showImageHandler(nullptr)
     , _imagesJson(nullptr)
     , _imageCount(0)
-    , _pScheduler(nullptr) {
+    , _scheduler(nullptr)
+    , _webServer(&webServer) {
 }
 
-void WebSiteClass::begin(Scheduler* scheduler) {
-    LOGD(TAG, "Enabling Website-Task...");
+void Soylent::WebSiteClass::begin(Scheduler* scheduler) {
+    LOGD(TAG, "Enabling WebSite-Task...");
 
     // Task handling
-    _pScheduler = scheduler;
-    _pScheduler->addTask(_website);
-    _website.waitFor(WebServer.getStatusRequest());
-    _website.enable();
+    _scheduler = scheduler;
+    // create and run a task for setting up the website
+    Task* webSiteTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] { _webSiteCallback(); }, 
+        _scheduler, false, NULL, NULL, true);   
+    webSiteTask->enable();
+    webSiteTask->waitFor(WebServer.getStatusRequest());
 }
 
-void WebSiteClass::end() {
+void Soylent::WebSiteClass::end() {
     LittleFS.end();
     if (_showImageHandler != nullptr) {
         delete _showImageHandler;
@@ -49,12 +50,10 @@ void WebSiteClass::end() {
         delete _imagesJson;
         _imagesJson = nullptr;
     }
-    _website.disable();
-    _pScheduler->deleteTask(_website);
 }
 
 // Add Handlers to the webserver
-void WebSiteClass::_websiteCallback() {
+void Soylent::WebSiteClass::_webSiteCallback() {
     LOGD(TAG, "Starting WebSite...");
 
     // Mount the FS, and try reading /images.json
@@ -128,16 +127,16 @@ void WebSiteClass::_websiteCallback() {
     }); 
 
     // Register handler for showing images
-    webServer.addHandler(_showImageHandler);
+    _webServer->addHandler(_showImageHandler);
 
     // serve from File System
-    webServer.serveStatic("/images/", LittleFS, "/").setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
+    _webServer->serveStatic("/images/", LittleFS, "/").setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
 
     // serve from File System
-    webServer.serveStatic("/images.json", LittleFS, "/images.json", "no-store").setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
+    _webServer->serveStatic("/images.json", LittleFS, "/images.json", "no-store").setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
     
     // serve request for display state
-    webServer.on("/display/state", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    _webServer->on("/display/state", HTTP_GET, [&](AsyncWebServerRequest* request) {
         LOGD(TAG, "Serve /display/state");
         AsyncResponseStream* response = request->beginResponseStream("application/json");
         JsonDocument doc;
@@ -156,7 +155,7 @@ void WebSiteClass::_websiteCallback() {
     }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; }); 
 
     // serve the logo (for main page)
-    webServer.on("/thingy_logo", HTTP_GET, [](AsyncWebServerRequest* request) {
+    _webServer->on("/thingy_logo", HTTP_GET, [](AsyncWebServerRequest* request) {
         LOGD(TAG, "Serve thingy logo...");
         AsyncWebServerResponse* response = request->beginResponse(200, "image/svg+xml", logo_thingy_start, logo_thingy_end - logo_thingy_start);
         response->addHeader("Content-Encoding", "gzip");
@@ -165,7 +164,7 @@ void WebSiteClass::_websiteCallback() {
     }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
 
     // serve the favicon.svg
-    webServer.on("/favicon.svg", HTTP_GET, [](AsyncWebServerRequest* request) {
+    _webServer->on("/favicon.svg", HTTP_GET, [](AsyncWebServerRequest* request) {
         LOGD(TAG, "Serve favicon.svg...");
         AsyncWebServerResponse* response = request->beginResponse(200, "image/svg+xml", favicon_svg_start, favicon_svg_end - favicon_svg_start);
         response->addHeader("Content-Encoding", "gzip");
@@ -174,7 +173,7 @@ void WebSiteClass::_websiteCallback() {
     }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
 
     // serve the apple-touch-icon
-    webServer.on("/apple-touch-icon.png", HTTP_GET, [](AsyncWebServerRequest* request) {
+    _webServer->on("/apple-touch-icon.png", HTTP_GET, [](AsyncWebServerRequest* request) {
         LOGD(TAG, "Serve apple-touch-icon.png...");
         AsyncWebServerResponse* response = request->beginResponse(200, "image/png", touchicon_start, touchicon_end - touchicon_start);
         response->addHeader("Content-Encoding", "gzip");
@@ -183,7 +182,7 @@ void WebSiteClass::_websiteCallback() {
     }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
 
     // serve the favicon.png
-    webServer.on("/favicon-96x96.png", HTTP_GET, [](AsyncWebServerRequest* request) {
+    _webServer->on("/favicon-96x96.png", HTTP_GET, [](AsyncWebServerRequest* request) {
         LOGD(TAG, "Serve favicon-96x96.png...");
         AsyncWebServerResponse* response = request->beginResponse(200, "image/png", favicon_96_png_start, favicon_96_png_end - favicon_96_png_start);
         response->addHeader("Content-Encoding", "gzip");
@@ -192,7 +191,7 @@ void WebSiteClass::_websiteCallback() {
     }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
 
     // serve the favicon.png
-    webServer.on("/favicon-32x32.png", HTTP_GET, [](AsyncWebServerRequest* request) {
+    _webServer->on("/favicon-32x32.png", HTTP_GET, [](AsyncWebServerRequest* request) {
         LOGD(TAG, "Serve favicon-32x32.png...");
         AsyncWebServerResponse* response = request->beginResponse(200, "image/png", favicon_32_png_start, favicon_32_png_end - favicon_32_png_start);
         response->addHeader("Content-Encoding", "gzip");
@@ -201,7 +200,7 @@ void WebSiteClass::_websiteCallback() {
     }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
 
     // serve our home page here, yet only when the ESPConnect portal is not shown 
-    webServer.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    _webServer->on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
         LOGD(TAG, "Serve...");
         AsyncWebServerResponse* response = request->beginResponse(200, "text/html", thingy_html_start, thingy_html_end - thingy_html_start);
         response->addHeader("Content-Encoding", "gzip");
@@ -209,7 +208,7 @@ void WebSiteClass::_websiteCallback() {
     }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
 
     // // serve our home page here, yet only when the ESPConnect portal is not shown 
-    // webServer.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // _webServer->on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
     //     LOGD(TAG, "Serve...");
     //     time_t now = static_cast<time_t>(esp_timer_get_time() / 1000000);
     //     char strftime_buf[64];
@@ -267,7 +266,7 @@ void WebSiteClass::_websiteCallback() {
     // }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
     
     // // allow restart, yet only when the ESPConnect portal is not shown 
-    // webServer.on("/taskinfo", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // _webServer->on("/taskinfo", HTTP_GET, [&](AsyncWebServerRequest* request) {
     //     LOGD(TAG, "/taskinfo!");
     //     uxTaskGetSystemState()
     //     LOGD(TAG, "tasks: %d", uxTaskGetNumberOfTasks());            
@@ -285,7 +284,7 @@ void WebSiteClass::_websiteCallback() {
     // }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
     
     // // clear all persisted config
-    // webServer.on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // _webServer->on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
     //   LOGW(TAG, "Clearing WiFi configuration...");
     //   espConnect.clearConfiguration();
     //   LOGW(TAG, "Clearing app configuration...");
@@ -298,7 +297,5 @@ void WebSiteClass::_websiteCallback() {
     //   request->redirect("/");
     // }).setFilter([&](__unused AsyncWebServerRequest* request) { return EventHandler.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
     
-    LOGD(TAG, "WebSite started!");
+    LOGD(TAG, "...done!");
 } 
-
-WebSiteClass WebSite;

@@ -5,15 +5,17 @@
 #include <ePaper.h>
 #define TAG "ESPConnect"
 
-ESPConnectClass::ESPConnectClass()
-    : _espConnect(TASK_IMMEDIATE, TASK_FOREVER, [&] { _espConnectCallback(); }, 
-        NULL, false, NULL, NULL, false)
-    , _pScheduler(nullptr) {
+Soylent::ESPConnectClass::ESPConnectClass(Mycila::ESPConnect& espConnect)
+    : _espConnectTask(nullptr)
+    , _scheduler(nullptr)
+    , _espConnect(&espConnect) {
 }
 
-void ESPConnectClass::begin(Scheduler* scheduler) {
+void Soylent::ESPConnectClass::begin(Scheduler* scheduler) {
+    LOGD(TAG, "Schedule ESPConnect...");
     // stop possibly running espConnect first
-    espConnect.end(); 
+    if (_espConnect->getState() != Mycila::ESPConnect::State::NETWORK_DISABLED)
+        _espConnect->end();     
 
     // get some info from espconnect's preferences
     Preferences preferences;
@@ -31,28 +33,37 @@ void ESPConnectClass::begin(Scheduler* scheduler) {
     }  
 
     // configure and begin espConnect
-    espConnect.setAutoRestart(true);
-    espConnect.setBlocking(false);
-    espConnect.setCaptivePortalTimeout(ESPCONNECT_TIMEOUT_CAPTIVE_PORTAL);
-    espConnect.setConnectTimeout(ESPCONNECT_TIMEOUT_CONNECT);    
-    espConnect.begin(APP_NAME, CAPTIVE_PORTAL_SSID, CAPTIVE_PORTAL_PASSWORD);
+    _espConnect->setAutoRestart(true);
+    _espConnect->setBlocking(false);
+    _espConnect->setCaptivePortalTimeout(ESPCONNECT_TIMEOUT_CAPTIVE_PORTAL);
+    _espConnect->setConnectTimeout(ESPCONNECT_TIMEOUT_CONNECT);    
+    _espConnect->begin(APP_NAME, CAPTIVE_PORTAL_SSID, CAPTIVE_PORTAL_PASSWORD);
 
     // Task handling
-    _pScheduler = scheduler;
-    _pScheduler->addTask(_espConnect);
-    _espConnect.enable();
+    _scheduler = scheduler;
+    _espConnectTask = new Task(TASK_IMMEDIATE, TASK_FOREVER, [&] { _espConnectCallback(); }, 
+        _scheduler, false, NULL, NULL, true);
+    _espConnectTask->enable();
+
+    LOGD(TAG, "ESPConnect is scheduled for start...");
 }
 
-void ESPConnectClass::end() {
-    LOGD(TAG, "Stopping ESPConnect-Task...");
-    _espConnect.disable();
-    _pScheduler->deleteTask(_espConnect);
-    espConnect.end();
+void Soylent::ESPConnectClass::end() {
+    LOGD(TAG, "Stopping ESPConnect...");
+    _espConnectTask->disable();
+    _espConnect->end(); 
+    LOGD(TAG, "...done!");
 } 
+
+void Soylent::ESPConnectClass::clearConfiguration() {
+    _espConnect->clearConfiguration(); 
+}
 
 // Loop espConnect
-void ESPConnectClass::_espConnectCallback() {
-    espConnect.loop();
-} 
+void Soylent::ESPConnectClass::_espConnectCallback() {
+    _espConnect->loop();
 
-ESPConnectClass ESPConnect;
+    if (_espConnectTask->isFirstIteration()) {
+        LOGD(TAG, "ESPConnect started and looping now!");
+    }    
+} 
