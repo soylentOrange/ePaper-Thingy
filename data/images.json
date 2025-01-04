@@ -2,6 +2,7 @@
     "images": 
     [ 
         {"name": "Show black text", "src": "/images/epaperthingy_black.svg", "img_idx": 1},
-        {"name": "Show red text", "src": "/images/epaperthingy_red.svg", "img_idx": 2}
+        {"name": "Show red text", "src": "/images/epaperthingy_red.svg", "img_idx": 2},
+        {"name": "random test image", "src": "/images/img_logo.svg", "img_idx": 3}
     ]
 }

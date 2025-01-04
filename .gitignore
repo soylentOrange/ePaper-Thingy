@@ -60,3 +60,7 @@ build/
 safeboot/data/customized*.html
 safeboot/assets/customized*.html
 assets/customized*.html
+
+data/*.r.bmp
+data/*.b.bmp
+data/*.svg

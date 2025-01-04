@@ -1,4 +1,4 @@
-# Environment description for pysunspec
+# Environment description for ePaper-Thingy tools
 #
 # Build the conda environment yourself with conda,
 #   activate it in the TERMINAL
@@ -12,7 +12,8 @@ channels:
   - conda-forge
 dependencies:
   - python=3.12
+  - cairosvg
   - pip
   - pip:
     - esptool
-
+    - pillow
