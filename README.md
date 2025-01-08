@@ -55,3 +55,39 @@ Some points that I would have liked to know earlier:
 * Creating svgs with Inkscape leaves a lot of clutter in the file, [SVGminify.com](https://www.svgminify.com/) helps
 * [jsfiddle](https://jsfiddle.net/) in extremely helpful in testing the websites. See one of the test fiddles [here](https://jsfiddle.net/9wr62y3u/28/)
 * You can burn your time easily when trying to come up with solutions for marginal problems...
+
+## Bitmap Images
+
+Images for [Waveshare Tri-Color 1.54 Inch E-Ink Display Module](https://www.waveshare.com/1.54inch-e-paper-module-b.htm) are written as pixel data bitmaps indepentendly for black and red pixels.
+
+Waveshare is giving a [brief guide](https://www.waveshare.com/wiki/E-Paper_Floyd-Steinberg) on how to prepare images for their Black/Red ePaper-Panels using Floyd-Steinberg dithering, which is using a color map being read by Photoshop to convert the image, export a gif and finally convert to bitmap using another software.
+
+The process is rather clumsy and uses costly software for a simple task that can easily be replaced by a few lines of python code.
+
+Some [StackExchange-Thread](https://graphicdesign.stackexchange.com/questions/90809/export-adobe-photoshop-color-table-act-file-as-csv-file) way from the past is giving a hint on how to read .act-files according to [Adobe's description](https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_pgfId-1070626) using python:
+
+```python
+import struct
+actColors = []
+with open("./assets/Black-White-Red.act", "rb") as actFile:
+    for _ in range(256):
+        raw = actFile.read(3)
+        color = struct.unpack("3B", raw)
+        actColors.append(color)
+
+# get and print unique entries
+actColors = list(set(actColors))
+print("\nColors in .act:")
+for col in actColors:
+    print(col)
+```
+
+The `Black-White-Red.act` file from [Waveshare](https://files.waveshare.com/upload/5/58/E-PAPER-ACT.zip) contain just three (unique) colors:
+
+* [0,0,0]
+* [255,0,0]
+* [255,255,255]
+
+As the Black-White-Red.act defines just 3 colors - black (0,0,0), red(255,0,0) and white (255,255,255), there is no need to read the act-file for the actual conversion. A palette for conversion is created on the fly.
+
+The script `svg2rbmono.py` that is executed during platformIO's build-process creates two 1-bit bitmap images from an svg input file automatically: one for the black pixels and one for the red pixels. The bmp-files are placed alongside the svg in the data-folder that is used to create the littleFS image. No need for manual conversion...

@@ -29,6 +29,21 @@ extern Soylent::WebSiteClass WebSite;
 // Spinlock for critical sections
 extern portMUX_TYPE cs_spinlock;
 
+namespace Soylent {
+    template <class Container>
+    void split_string(const std::string& str, Container& cont, const std::string& delims = " ")
+    {
+        std::size_t current, previous = 0;
+        current = str.find_first_of(delims);
+        while (current != std::string::npos) {
+            cont.push_back(str.substr(previous, current - previous));
+            previous = current + 1;
+            current = str.find_first_of(delims, previous);
+        }
+        cont.push_back(str.substr(previous, current - previous));
+    };
+}
+
 // Shorthands for Logging
 #ifdef EPAPER_DEBUG
     #ifdef MYCILA_LOGGER_SUPPORT

@@ -42,6 +42,11 @@ void setup() {
     // Initialize the Scheduler
     scheduler.init();
 
+    // Mount the FS
+    if (!LittleFS.begin(false)) {
+        LOGE(APP_NAME, "An Error has occurred while mounting LittleFS!");      
+    }
+
     // Add Restart-Task to Scheduler
     ESPRestart.begin(&scheduler);
 

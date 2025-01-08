@@ -23,7 +23,7 @@ Soylent::WebSiteClass::WebSiteClass(AsyncWebServer& webServer)
     : _imageIdx(0)
     , _showImageHandler(nullptr)
     , _imagesJson(nullptr)
-    , _imageCount(0)
+    , _imageCount(1)
     , _scheduler(nullptr)
     , _webServer(&webServer) {
 }
@@ -56,32 +56,27 @@ void Soylent::WebSiteClass::end() {
 void Soylent::WebSiteClass::_webSiteCallback() {
     LOGD(TAG, "Starting WebSite...");
 
-    // Mount the FS, and try reading /images.json
-    LOGD(TAG, "Mounting littleFS...");
-    if (!LittleFS.begin(false)) {
-        LOGE(TAG, "An Error has occurred while mounting LittleFS!");      
+    // try reading /images.json
+    LOGD(TAG, "Reading images.json...");
+    File file = LittleFS.open("/images.json", "r");
+    if (!file || file.isDirectory()) { 
+        LOGE(TAG, "An Error has occurred while reading images.json!"); 
     } else {
-        File file = LittleFS.open("/images.json", "r");
-        if (!file || file.isDirectory()) { 
-            LOGE(TAG, "An Error has occurred while reading images.json!"); 
+        std::string fileContent;
+        _imagesJson = new JsonDocument();
+        while (file.available()) {
+            char intRead = file.read();
+            fileContent += intRead;
+        }            
+        file.close();
+        deserializeJson(*_imagesJson, fileContent);
+        _imagesJson->shrinkToFit();
+        if (!_imagesJson->as<JsonObject>()["images"].is<JsonArray>()) {
+            LOGE(TAG, "An Error has occurred while parsing images.json for images!");
         } else {
-            std::string fileContent;
-            _imagesJson = new JsonDocument();
-            while (file.available()) {
-                char intRead = file.read();
-                fileContent += intRead;
-            }            
-            file.close();
-            deserializeJson(*_imagesJson, fileContent);
-            _imagesJson->shrinkToFit();
-            if (!_imagesJson->as<JsonObject>()["images"].is<JsonArray>()) {
-                LOGE(TAG, "An Error has occurred while parsing images.json for images!");
-            } else {
-                _imageCount = 
-                LOGI(TAG, "images.json seems fine! (%d images)", _imagesJson->as<JsonObject>()["images"].as<JsonArray>().size());
-                _fsMounted = true;
-                LOGD(TAG, "Mounted littleFS successfully.");
-            }
+            _imageCount =  _imagesJson->as<JsonObject>()["images"].as<JsonArray>().size();
+            LOGI(TAG, "images.json seems fine! (%d images)", _imageCount);
+            _fsMounted = true;
         }
     }
 
@@ -101,25 +96,37 @@ void Soylent::WebSiteClass::_webSiteCallback() {
             LOGW(TAG, "img_idx out of bounds");
             request->send(418, "text/plain", "img_idx out of bounds");
         } else {
-            // TODO: do it right
             switch (img_idx) {
                 case 0: 
+                    // 0 is hardcoded to wiping
+                    // not part of the images.json but embedded in the html-code
                     LOGI(TAG, "I want to wipe!");                  
                     Display.wipeDisplay();
                     _imageIdx = img_idx;                  
                     break;
-                case 1: 
+                case 1:    
+                    // 1 & 2 are hardcoded to printing text
+                    // a svg is present only for display on the website  
+                    // the epaper is written with text                   
                     LOGI(TAG, "I want to print in black!");                  
                     Display.printCenteredTag(NAME_TAG_BLACK);
                     _imageIdx = img_idx;                  
                     break;
                 case 2: 
+                    // 1 & 2 are hardcoded to printing text
+                    // a svg is present only for display on the website  
+                    // the epaper is written with text    
                     LOGI(TAG, "I want to print in red!");                 
                     Display.printCenteredTag(NAME_TAG_RED);
                     _imageIdx = img_idx;                  
                     break;
-                default:
+                default: {
+                    // show an image from littleFS
+                    LOGI(TAG, "I want to show an image!"); 
+                    auto img_name = _imagesJson->as<JsonObject>()["images"].as<JsonArray>()[img_idx-1].as<JsonObject>()["src"];
+                    Display.showImage(img_name);  
                     _imageIdx = img_idx;
+                }                    
             }
             
             request->send(200, "text/plain", "OK");           
@@ -137,7 +144,7 @@ void Soylent::WebSiteClass::_webSiteCallback() {
     
     // serve request for display state
     _webServer->on("/display/state", HTTP_GET, [&](AsyncWebServerRequest* request) {
-        LOGD(TAG, "Serve /display/state");
+        // LOGD(TAG, "Serve /display/state");
         AsyncResponseStream* response = request->beginResponseStream("application/json");
         JsonDocument doc;
         JsonObject root = doc.to<JsonObject>();
@@ -201,7 +208,7 @@ void Soylent::WebSiteClass::_webSiteCallback() {
 
     // serve our home page here, yet only when the ESPConnect portal is not shown 
     _webServer->on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
-        LOGD(TAG, "Serve...");
+        // LOGD(TAG, "Serve...");
         AsyncWebServerResponse* response = request->beginResponse(200, "text/html", thingy_html_start, thingy_html_end - thingy_html_start);
         response->addHeader("Content-Encoding", "gzip");
         request->send(response);

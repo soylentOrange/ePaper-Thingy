@@ -8,10 +8,10 @@ being read by Photoshop to convert the image, export a gif and finally convert t
 The process is using costly software for a simple task that can easily
 be replaced by a few lines of python code.
 The Black-White-Red.act defines 3 colors black (0,0,0), red(255,0,0) and white (255,255,255).
-No need to read it here, a palette for conversion is defined manually.
+No need to read it here, a palette for conversion is defined on the fly.
 
 This script creates two 1-bit bitmap images from an svg input file: one for the black pixels
-and one for the red pixels (note: the red is inverted).
+and one for the red pixels.
 
 The code for importing svg-images is adapted from [sphinxext-photofinish](https://github.com/wpilibsuite/sphinxext-photofinish)
 """
@@ -304,13 +304,9 @@ def svg_to_mono(
 
     return
 
-# input_filename = 'img_test.svg'
-# input_path = './assets'
-
-# svg_to_mono(os.path.join(input_path, input_filename))
-
-
 os.makedirs('.pio/assets/fs_images', exist_ok=True)
+
+# list the svgs for conversion here!
 for filename in ['img_door_open.svg', 'img_locked.svg', 'img_logo.svg', 'img_test.svg', 'img_unlocked.svg']:
     skip = False
     if os.path.isfile('.pio/assets/fs_images/' + filename + '.timestamp'):

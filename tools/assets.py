@@ -3,6 +3,9 @@ import os
 import sys
 
 os.makedirs('.pio/assets', exist_ok=True)
+
+# list the files for gzipping here!
+# don't forget to list them in platformio.ini as well!
 for filename in ['logo_captive.svg', 'apple-touch-icon.png', 'favicon-96x96.png', 'favicon-32x32.png', 'favicon.svg', 'logo_thingy.svg']:
     skip = False
     if os.path.isfile('.pio/assets/' + filename + '.timestamp'):

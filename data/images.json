@@ -3,6 +3,10 @@
     [ 
         {"name": "Show black text", "src": "/images/epaperthingy_black.svg", "img_idx": 1},
         {"name": "Show red text", "src": "/images/epaperthingy_red.svg", "img_idx": 2},
-        {"name": "random test image", "src": "/images/img_logo.svg", "img_idx": 3}
+        {"name": "Show test image", "src": "/images/img_test.svg", "img_idx": 3},
+        {"name": "Show infamous logo", "src": "/images/img_logo.svg", "img_idx": 4},
+        {"name": "Show image: door is open", "src": "/images/img_door_open.svg", "img_idx": 5}, 
+        {"name": "Show image: lock is unlocked", "src": "/images/img_unlocked.svg", "img_idx": 6},
+        {"name": "Show image: lock is locked", "src": "/images/img_locked.svg", "img_idx": 7}
     ]
 }

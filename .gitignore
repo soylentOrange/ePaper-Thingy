@@ -64,3 +64,5 @@ assets/customized*.html
 data/*.r.bmp
 data/*.b.bmp
 data/*.svg
+!data/epaperthingy_black.svg
+!data/epaperthingy_red.svg
